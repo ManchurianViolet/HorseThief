@@ -3551,19 +3551,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1384819415973766254, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.80111873
+      value: 0.8012354
       objectReference: {fileID: 0}
     - target: {fileID: 1384819415973766254, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.078167476
+      value: 0.078178845
       objectReference: {fileID: 0}
     - target: {fileID: 1384819415973766254, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.5905745
+      value: -0.59041613
       objectReference: {fileID: 0}
     - target: {fileID: 1384819415973766254, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.057624053
+      value: 0.05760861
       objectReference: {fileID: 0}
     - target: {fileID: 3140978792112968781, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_Layer
@@ -3651,19 +3651,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6111943558129369147, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.80111873
+      value: 0.8012354
       objectReference: {fileID: 0}
     - target: {fileID: 6111943558129369147, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.07816746
+      value: 0.07817885
       objectReference: {fileID: 0}
     - target: {fileID: 6111943558129369147, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.59057444
+      value: -0.59041613
       objectReference: {fileID: 0}
     - target: {fileID: 6111943558129369147, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.05762405
+      value: 0.0576086
       objectReference: {fileID: 0}
     - target: {fileID: 6117783805026682116, guid: a87a5da46b72bd242a9bd38189a83a2a, type: 3}
       propertyPath: m_Layer
@@ -5537,10 +5537,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
