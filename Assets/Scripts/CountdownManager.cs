@@ -4,185 +4,218 @@ using System.Collections;
 
 public class CountdownManager : MonoBehaviour
 {
-    [Header("Basic UI, Audio, Trigger")]
-    [SerializeField] private TextMeshProUGUI countdownText; // 카운트다운 UI 텍스트
-    [SerializeField] private AudioSource audioSource; // 메인 사운드 소스 (비프음, 총성 등)
-    [SerializeField] private AudioSource audioSourceFireworks; // 불꽃놀이 사운드 소스
-    [SerializeField] private AudioClip beepSound; // 카운트다운 경고음 클립
-    [SerializeField] private AudioClip gunSound; // 레이스 시작 총성 클립
-    [SerializeField] private AudioClip successSound; // 승리 사운드 클립
-    [SerializeField] private AudioClip failureSound; // 패배/실격 사운드 클립
-    [SerializeField] private AudioClip fireworksSound; // 불꽃놀이 사운드 클립
-    [SerializeField] private EndTrigger endTrigger; // 종료 트리거 컴포넌트 참조
-    [SerializeField] private ParticleSystem startParticle; // 시작 시 파티클
-    [SerializeField] private ParticleSystem endParticle; // 종료 시 파티클
+    [Header("=== Player & Rivals ===")]
+    [SerializeField] private HorseControl playerHorse;
+    [SerializeField] private RivalHorseMovement rivalHorse1;
+    [SerializeField] private RivalHorseMovement rivalHorse2;
+    [SerializeField] private RivalHorseMovement rivalHorse3;
 
-    [Header("Horse Objects")]
-    [SerializeField] private HorseControl_RacingStage playerHorseMain; // 플레이어 말 컨트롤 스크립트
-    [SerializeField] private RivalHorseMovement rivalHorse1; // 라이벌 말 1
-    [SerializeField] private RivalHorseMovement rivalHorse2; // 라이벌 말 2
-    [SerializeField] private RivalHorseMovement rivalHorse3; // 라이벌 말 3
+    [Header("=== UI System ===")]
+    [SerializeField] private TextMeshProUGUI countdownText;
+    [SerializeField] private TextMeshProUGUI speedText;
+    [SerializeField] private TextMeshProUGUI distanceText;
+    [SerializeField] private TextMeshProUGUI timeText;
+    [SerializeField] private TextMeshProUGUI recordBoardText;
 
-    [Header("Countdown Light Objects")]
-    [SerializeField] private GameObject light1; // 신호등 1
-    [SerializeField] private GameObject light2; // 신호등 2
-    [SerializeField] private GameObject light3; // 신호등 3
-    [SerializeField] private Material[] lightMat; // 신호등 머티리얼 배열 (0:Off, 1:Ready, 2:Go)
+    [Header("=== Audio & Visuals ===")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioSource audioSourceFireworks;
+    [SerializeField] private AudioClip beepSound;
+    [SerializeField] private AudioClip gunSound;
+    [SerializeField] private AudioClip finishSound;
+    [SerializeField] private AudioClip fireworksSound;
 
-    private bool isRaceFinished = false; // 레이스 종료 상태 플래그
+    [SerializeField] private ParticleSystem startParticle;
+    [SerializeField] private ParticleSystem endParticle;
 
-    private void Start()
+    [Header("=== Lights ===")]
+    [SerializeField] private GameObject light1;
+    [SerializeField] private GameObject light2;
+    [SerializeField] private GameObject light3;
+    [SerializeField] private Material[] lightMat;
+
+    // --- 내부 로직 변수 ---
+    private bool isRaceStarted = false;
+    private bool isRaceFinished = false;
+    private float raceTimer = 0f;
+    private Vector3 startPosition;
+    private float currentDistance = 0f;
+
+    // 구간 기록 체크용 변수
+    private int nextMilestoneIndex = 0;
+    private readonly float[] milestones = { 100f, 200f, 300f, 400f, 500f };
+
+    // [수정] 속도 부드럽게 만들기 위한 변수
+    private Vector3 lastPosition;
+    private float currentDisplaySpeed = 0f; // UI에 표시할 속도 (보정됨)
+
+    void Start()
     {
-        // 1. 종료 트리거 이벤트 리스너 등록
-        if (endTrigger != null)
+        if (playerHorse != null)
         {
-            endTrigger.onTriggerEnter.AddListener(OnEndTriggerEnter);
+            playerHorse.enabled = false;
+            startPosition = playerHorse.transform.position;
+            lastPosition = startPosition;
         }
 
-        // 2. 플레이어 말의 실격 이벤트 구독
-        if (playerHorseMain != null)
-        {
-            playerHorseMain.OnFalseStart += HandleFalseStart;
-        }
-
-        // 3. 카운트다운 시작
-        StartCoroutine(Countdown());
+        InitializeUI();
+        StartCoroutine(CountdownRoutine());
     }
 
-    // 🔔 실격(False Start) 처리 함수
-    private void HandleFalseStart()
+    void Update()
     {
-        if (isRaceFinished) return; // 이미 종료된 레이스는 무시
+        if (!isRaceStarted || isRaceFinished || playerHorse == null) return;
 
-        StopAllCoroutines(); // 진행 중인 카운트다운 코루틴 정지
+        // --- 1. 시간 및 거리 계산 ---
+        raceTimer += Time.deltaTime;
+        Vector3 currentPos = playerHorse.transform.position;
 
-        if (countdownText != null) countdownText.gameObject.SetActive(false); // 카운트다운 텍스트 숨김
+        currentDistance = Vector3.Distance(startPosition, currentPos);
 
-        isRaceFinished = true;
+        // --- [핵심 수정] 2. 속도 계산 (스무딩 적용) ---
+        // 순간 속도 계산 (m/s)
+        float rawSpeedMPS = Vector3.Distance(lastPosition, currentPos) / Time.deltaTime;
 
-        if (audioSource != null && failureSound != null)
-        {
-            audioSource.PlayOneShot(failureSound); // 실패 사운드 재생
-        }
+        // 순간 속도가 튀는 것을 방지하기 위해 Lerp(선형 보간) 사용
+        // 현재 표시 속도가 목표 속도(rawSpeed)를 천천히(Time.deltaTime * 3f) 따라가게 함
+        currentDisplaySpeed = Mathf.Lerp(currentDisplaySpeed, rawSpeedMPS, Time.deltaTime * 3f);
 
-        DisableAllHorseMovement(); // 모든 말의 움직임 정지
-        // 실격 시 Failure 텍스트는 SuccessTextTyping과 유사한 스크립트를 통해 처리될 수 있습니다.
+        float speedKPH = currentDisplaySpeed * 3.6f; // km/h 변환
+
+        // 움직임이 거의 없으면 0으로 고정 (미세 떨림 방지)
+        if (speedKPH < 1f) speedKPH = 0f;
+
+        lastPosition = currentPos;
+
+        // --- 3. 실시간 UI 갱신 ---
+        UpdateRealtimeUI(speedKPH);
+
+        // --- 4. 구간 기록 체크 ---
+        CheckMilestones();
     }
 
-    // 🔔 말이 실격/도착했을 때 모든 말의 움직임을 멈추는 함수
-    private void DisableAllHorseMovement()
+    private IEnumerator CountdownRoutine()
     {
-        // 모든 말의 isCountdownEnd 플래그를 false로 설정하여 움직임 정지
-        if (playerHorseMain != null) playerHorseMain.isCountdownEnd = false;
-        if (rivalHorse1 != null) rivalHorse1.isCountdownEnd = false;
-        if (rivalHorse2 != null) rivalHorse2.isCountdownEnd = false;
-        if (rivalHorse3 != null) rivalHorse3.isCountdownEnd = false;
-    }
+        countdownText.gameObject.SetActive(true);
 
-    // 종료 트리거 진입 시 호출되는 함수
-    private void OnEndTriggerEnter(Collider _other)
-    {
-        if (isRaceFinished) return; // 이미 레이스가 종료되었으면 무시
+        yield return ShowCount("3", light1);
+        yield return ShowCount("2", light2);
+        yield return ShowCount("1", light3);
 
-        // 태그 확인 (어떤 말이 결승선에 도착했는지)
-        if (_other.CompareTag("HorseChest"))
-        {
-            // 플레이어 말이 먼저 통과 -> 승리 처리
-            Debug.Log(">>> [WIN CHECK] Player HorseChest detected first! Calling HandleRaceResult(true).");
-            HandleRaceResult(true);
-        }
-        else if (_other.CompareTag("RivalHorseChest"))
-        {
-            // 라이벌 말이 먼저 통과 -> 패배 처리
-            HandleRaceResult(false);
-        }
-    }
-
-    // 레이스 결과 최종 처리 함수
-    private void HandleRaceResult(bool isSuccess)
-    {
-        isRaceFinished = true;
-
-        // 모든 말 이동 정지 (HandleRaceResult 호출 직후에 호출하는 것이 안정적)
-        DisableAllHorseMovement();
-
-        // 승리 또는 패배 시 처리
-        if (isSuccess) // 승리 시
-        {
-            // 승리 텍스트 활성화 (SuccessTextTyping 스크립트가 붙어있음)
-
-            // 승리 파티클 생성
-            Instantiate(endParticle, new Vector3(-30, 7, -3), Quaternion.Euler(new Vector3(270, 0, 0)));
-            Instantiate(endParticle, new Vector3(-35, 7, -13), Quaternion.Euler(new Vector3(270, 0, 0)));
-            Instantiate(endParticle, new Vector3(-35, 7, 7), Quaternion.Euler(new Vector3(270, 0, 0)));
-            Instantiate(endParticle, new Vector3(-40, 7, -6), Quaternion.Euler(new Vector3(270, 0, 0)));
-            Instantiate(endParticle, new Vector3(-40, 7, 0), Quaternion.Euler(new Vector3(270, 0, 0)));
-
-            // 승리 사운드 재생
-            audioSource.PlayOneShot(successSound);
-            audioSourceFireworks.PlayOneShot(fireworksSound);
-        }
-        else // 패배 시 (라이벌 승리)
-        {
-            audioSource.PlayOneShot(failureSound); // 패배 사운드 재생
-            // 패배 텍스트 활성화 로직이 추가될 수 있음
-        }
-    }
-
-
-    private IEnumerator Countdown()
-    {
-        // 3초 카운트다운 시작
-        // 3
-        countdownText.text = "3";
-        audioSource.PlayOneShot(beepSound);
-        light1.GetComponent<Renderer>().material = lightMat[1]; // light1을 준비 상태(index 1)로 설정
-        yield return new WaitForSeconds(1f);
-
-        // 2
-        countdownText.text = "2";
-        audioSource.PlayOneShot(beepSound);
-        light2.GetComponent<Renderer>().material = lightMat[1]; // light2를 준비 상태(index 1)로 설정
-        yield return new WaitForSeconds(1f);
-
-        // 1
-        countdownText.text = "1";
-        audioSource.PlayOneShot(beepSound);
-        light3.GetComponent<Renderer>().material = lightMat[1]; // light3을 준비 상태(index 1)로 설정
-        yield return new WaitForSeconds(1f);
-
-        // 0 (GO!)
         countdownText.text = "GO!";
-        if (audioSource != null && gunSound != null)
-        {
-            audioSource.PlayOneShot(gunSound); // 총성 사운드 재생
-        }
+        if (audioSource != null && gunSound != null) audioSource.PlayOneShot(gunSound);
 
-        // 모든 말 움직임 시작 (isCountdownEnd를 true로 설정)
-        playerHorseMain.isCountdownEnd = true;
-        rivalHorse1.isCountdownEnd = true;
-        rivalHorse2.isCountdownEnd = true;
-        rivalHorse3.isCountdownEnd = true;
+        SetLightMaterial(light1, 2);
+        SetLightMaterial(light2, 2);
+        SetLightMaterial(light3, 2);
 
-        // 모든 신호등을 GO 상태(index 2)로 설정
-        light1.GetComponent<Renderer>().material = lightMat[2];
-        light2.GetComponent<Renderer>().material = lightMat[2];
-        light3.GetComponent<Renderer>().material = lightMat[2];
+        if (startParticle != null) Instantiate(startParticle, new Vector3(14, 6, -3), Quaternion.Euler(-90, 0, 0));
 
-        // 시작 파티클 생성
-        Instantiate(startParticle, new Vector3(14, 6, -3), Quaternion.Euler(new Vector3(-90, 0, 0)));
+        if (playerHorse != null) playerHorse.enabled = true;
+
+        StartRivals();
+
+        isRaceStarted = true;
+
         yield return new WaitForSeconds(1f);
-
-        // GO! 텍스트 숨김
         countdownText.gameObject.SetActive(false);
     }
 
-    // 🔔 OnDestroy 시 이벤트 구독 해제
-    private void OnDestroy()
+    private void CheckMilestones()
     {
-        if (playerHorseMain != null)
+        if (nextMilestoneIndex >= milestones.Length) return;
+
+        if (currentDistance >= milestones[nextMilestoneIndex])
         {
-            playerHorseMain.OnFalseStart -= HandleFalseStart;
+            float splitTime = raceTimer;
+            float targetDistance = milestones[nextMilestoneIndex];
+
+            // [수정] 기록에도 소수점 한 자리 포맷 적용
+            string recordLine = $"{targetDistance:F0}m : {FormatTime(splitTime)}";
+            recordBoardText.text += recordLine + "\n";
+
+            if (nextMilestoneIndex == milestones.Length - 1)
+            {
+                FinishRace();
+            }
+
+            nextMilestoneIndex++;
+        }
+    }
+
+    private void FinishRace()
+    {
+        isRaceFinished = true;
+
+        if (audioSource != null && finishSound != null) audioSource.PlayOneShot(finishSound);
+        if (audioSourceFireworks != null && fireworksSound != null) audioSourceFireworks.PlayOneShot(fireworksSound);
+
+        SpawnFireworks();
+
+        countdownText.gameObject.SetActive(true);
+        countdownText.text = "FINISH!";
+    }
+
+    private IEnumerator ShowCount(string text, GameObject lightObj)
+    {
+        countdownText.text = text;
+        if (audioSource != null && beepSound != null) audioSource.PlayOneShot(beepSound);
+        SetLightMaterial(lightObj, 1);
+        yield return new WaitForSeconds(1f);
+    }
+
+    private void UpdateRealtimeUI(float speedKmh)
+    {
+        // 시간 표시 (포맷 변경됨)
+        timeText.text = FormatTime(raceTimer);
+
+        // 거리 표시
+        distanceText.text = $"Dist: {currentDistance:F1} m";
+
+        // 속도 표시 (정수)
+        speedText.text = $"Speed: {speedKmh:F0} km/h";
+    }
+
+    private void InitializeUI()
+    {
+        timeText.text = "00:00.0";
+        distanceText.text = "Dist: 0.0 m";
+        speedText.text = "Speed: 0 km/h";
+        recordBoardText.text = "";
+    }
+
+    // [수정] 시간 포맷 변경 함수
+    private string FormatTime(float time)
+    {
+        int minutes = (int)(time / 60);
+        float seconds = time % 60;
+
+        // {1:04.1f} 설명:
+        // 04 -> 최소 4자리 확보 (앞에 0 채움, 예: 09.5)
+        // .1f -> 소수점 첫째 자리까지만 표시
+        return string.Format("{0:00}:{1:04.1f}", minutes, seconds);
+    }
+
+    private void SetLightMaterial(GameObject lightObj, int matIndex)
+    {
+        if (lightObj != null && lightMat.Length > matIndex)
+            lightObj.GetComponent<Renderer>().material = lightMat[matIndex];
+    }
+
+    private void StartRivals()
+    {
+        if (rivalHorse1 != null) rivalHorse1.isCountdownEnd = true;
+        if (rivalHorse2 != null) rivalHorse2.isCountdownEnd = true;
+        if (rivalHorse3 != null) rivalHorse3.isCountdownEnd = true;
+    }
+
+    private void SpawnFireworks()
+    {
+        if (endParticle != null)
+        {
+            Instantiate(endParticle, new Vector3(-30, 7, -3), Quaternion.Euler(270, 0, 0));
+            Instantiate(endParticle, new Vector3(-35, 7, -13), Quaternion.Euler(270, 0, 0));
+            Instantiate(endParticle, new Vector3(-35, 7, 7), Quaternion.Euler(270, 0, 0));
         }
     }
 }
