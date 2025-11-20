@@ -9,7 +9,7 @@ public class KeyBoardStage : MonoBehaviour
     [SerializeField] private TextMeshPro playerTyping;
     [SerializeField] private TextMeshPro successMessage;
     [SerializeField] private TextMeshPro title;
-    [SerializeField] private TextMeshPro question;
+    [SerializeField] private TextMeshProUGUI question;
     [SerializeField] private TextMeshPro endStage;
     [SerializeField] private GameObject nextStagePortal;
     public GameObject[] Keys; // A~Z + Space + Backspace
@@ -84,7 +84,7 @@ public class KeyBoardStage : MonoBehaviour
         currentTargetPhrase = targetPhrases[randomIndex];
 
         // question 텍스트를 업데이트합니다.
-        question.text = $"Type: {currentTargetPhrase}";
+        question.text = $"PassWord: {currentTargetPhrase}";
     }
 
     private void Update()
