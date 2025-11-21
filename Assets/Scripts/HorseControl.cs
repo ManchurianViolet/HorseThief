@@ -4,43 +4,37 @@ public class HorseControl : MonoBehaviour
 {
     private Rigidbody rb;
     private Transform frontShinL, frontShinR, footL, footR;
-    [SerializeField] private Transform head; // 머리 오브젝트 참조
+    [SerializeField] private Transform head;
     [SerializeField] private Transform scull;
     [SerializeField] private Transform neck;
-    // 다리 회전 속도 (초당 회전 각도)
+
     [SerializeField] private float rotationSpeed = 90f;
-    private float currentRotationZ = 0f; // 현재 Z축 회전 각도
-    private float currentRotationX = 0f; // 현재 X축 회전 각도
+    private float currentRotationZ = 0f;
+    private float currentRotationX = 0f;
     private LayerMask groundLayerMask;
 
-    // 다리가 바닥을 밀 때 추가적인 힘 (전방)
     [SerializeField] private float pushForce = 200f;
-
-    // 방향 전환을 위한 회전 토크 (고정값)
-    [SerializeField] private float turnTorque = 50f; // 회전 토크 크기
-
-    // 머리 회전 속도 (초당 회전 각도)
+    [SerializeField] private float turnTorque = 50f;
     [SerializeField] private float headRotationSpeed = 60f;
-    // 점프 관련 변수
-    [SerializeField] private float jumpForce = 500f; // 기본 점프력
-    [SerializeField] private float chargeMultiplier = 2f; // 충전 시 최대 배율
-    [SerializeField] private float maxChargeTime = 1f; // 최대 충전 시간 (초)
-    [SerializeField] private float chargeTime = 0f; // 현재 충전 시간
-    [SerializeField] private bool isCharging = false; // 충전 중인지 체크
-    [SerializeField] private bool isGrounded = false; // 바닥에 닿아 있는지 체크
-    [SerializeField] private float moveSpeed = 1f; // 머리이동 속도 (초당 단위)
-    [SerializeField] private float minY = 0f;     // 최소 Y 위치 (로컬 기준)
-    [SerializeField] private float maxY = 5f;     // 최대 Y 위치 (로컬 기준)
 
-    // 회전 중인지 여부를 추적하는 변수
+    [SerializeField] private float jumpForce = 500f;
+    [SerializeField] private float chargeMultiplier = 2f;
+    [SerializeField] private float maxChargeTime = 1f;
+    [SerializeField] private float chargeTime = 0f;
+    [SerializeField] private bool isCharging = false;
+    [SerializeField] private bool isGrounded = false;
+    [SerializeField] private float moveSpeed = 1f;
+    [SerializeField] private float minY = 0f;
+    [SerializeField] private float maxY = 5f;
+
     private bool isTurning = false;
-    private RigidbodyConstraints defaultConstraints; // 기본 Constraints 저장
+    private RigidbodyConstraints defaultConstraints;
+
     void Start()
     {
-        // Rigidbody 참조
         rb = GetComponent<Rigidbody>();
         groundLayerMask = LayerMask.GetMask("Ground");
-        // 다리 오브젝트 참조
+
         frontShinL = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/front_shoulder.L/front_thigh.L/front_shin.L");
         frontShinR = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/front_shoulder.R/front_thigh.R/front_shin.R");
         footL = transform.Find("horse.001/Root/spine.005/shoulder.L/thigh.L/shin.L/foot.L");
@@ -48,78 +42,73 @@ public class HorseControl : MonoBehaviour
         head = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008");
         scull = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008/spine.009/spine.010/scull");
         neck = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008/spine.009");
-        // 오브젝트가 제대로 참조되었는지 확인
+
         if (frontShinL == null || frontShinR == null || footL == null || footR == null || head == null)
         {
             Debug.LogError("다리 오브젝트를 찾을 수 없습니다. 경로를 확인하세요.");
         }
-        rb.mass = 100f; // 무게 조정
-        rb.linearDamping = 0.05f; // 저항
-        rb.angularDamping = 0.15f; // 회전 저항
-        // Rigidbody Constraints 초기화 (Y축 회전 고정 포함)
-        defaultConstraints = RigidbodyConstraints.FreezeRotationY;
-        rb.constraints = defaultConstraints; // 초기 Constraints 설정
+        rb.mass = 100f;
+        rb.linearDamping = 0.05f;
+        rb.angularDamping = 0.15f;
+
+        // [수정됨] 평상시에는 모든 회전(X, Y, Z)을 다 고정합니다.
+        defaultConstraints = RigidbodyConstraints.FreezeRotation;
+        rb.constraints = defaultConstraints;
     }
 
     void Update()
     {
-        CheckGrounded(); // 바닥 체크
+        CheckGrounded();
 
-        // 스페이스바 입력 처리
         if (Input.GetKey(KeyCode.Space) && isGrounded)
         {
             isCharging = true;
             chargeTime += Time.deltaTime;
-            chargeTime = Mathf.Clamp(chargeTime, 0f, maxChargeTime); // 최대 충전 시간 제한
+            chargeTime = Mathf.Clamp(chargeTime, 0f, maxChargeTime);
         }
 
         if (Input.GetKeyUp(KeyCode.Space) && isCharging && isGrounded)
         {
-            Jump(); // 스페이스바를 뗄 때 점프
+            Jump();
             isCharging = false;
-            chargeTime = 0f; // 충전 시간 초기화
+            chargeTime = 0f;
         }
-        if(isGrounded == false)
+        if (isGrounded == false)
         {
-            chargeTime = 0f; // 공중에 있을 때 충전 시간 초기화
+            chargeTime = 0f;
         }
 
 
         // 다리 조종
-        // Q: 왼쪽 앞다리 (front_shin_L) 회전
         if (Input.GetKey(KeyCode.Q) && frontShinL != null)
         {
             frontShinL.Rotate(-rotationSpeed * Time.deltaTime, 0, 0, Space.Self);
             ApplyPushForce(frontShinL);
         }
 
-        // E: 오른쪽 앞다리 (front_shin_R) 회전
         if (Input.GetKey(KeyCode.E) && frontShinR != null)
         {
             frontShinR.Rotate(-rotationSpeed * Time.deltaTime, 0, 0, Space.Self);
             ApplyPushForce(frontShinR);
         }
 
-        // O: 왼쪽 뒷다리 (foot_L) 회전
         if (Input.GetKey(KeyCode.O) && footL != null)
         {
             footL.Rotate(-rotationSpeed * Time.deltaTime, 0, 0, Space.Self);
             ApplyPushForce(footL);
         }
 
-        // P: 오른쪽 뒷다리 (foot_R) 회전
         if (Input.GetKey(KeyCode.P) && footR != null)
         {
             footR.Rotate(-rotationSpeed * Time.deltaTime, 0, 0, Space.Self);
             ApplyPushForce(footR);
         }
+
         // 머리 조종
         if (Input.GetKey(KeyCode.W) && head != null)
         {
-            float rotationAmount = -headRotationSpeed * Time.deltaTime; // 위로 회전 (음수)
+            float rotationAmount = -headRotationSpeed * Time.deltaTime;
             float newRotation = currentRotationX + rotationAmount;
-
-            // 회전 각도를 60도로 제한
             if (newRotation >= -60f)
             {
                 head.Rotate(rotationAmount, 0, 0, Space.Self);
@@ -127,46 +116,39 @@ public class HorseControl : MonoBehaviour
             }
         }
 
-        // S: 머리를 아래로 회전
         if (Input.GetKey(KeyCode.S) && head != null)
         {
-            float rotationAmount = headRotationSpeed * Time.deltaTime; // 아래로 회전 (양수)
+            float rotationAmount = headRotationSpeed * Time.deltaTime;
             float newRotation = currentRotationX + rotationAmount;
-
-            // 회전 각도를 60도로 제한
             if (newRotation <= 60f)
             {
                 head.Rotate(rotationAmount, 0, 0, Space.Self);
                 currentRotationX = Mathf.Clamp(newRotation, -60f, 60f);
             }
         }
-        // A: 머리를 왼쪽으로 회전
+
         if (Input.GetKey(KeyCode.A) && neck != null)
         {
             float rotationAmount = -headRotationSpeed * Time.deltaTime;
             float newRotation = currentRotationZ + rotationAmount;
-
-            // 회전 각도를 -60 ~ 60도로 제한
             if (newRotation >= -60f)
             {
                 neck.Rotate(0, 0, rotationAmount, Space.Self);
                 currentRotationZ = Mathf.Clamp(newRotation, -60f, 60f);
             }
         }
-        // D: 머리를 오른쪽으로 회전
+
         if (Input.GetKey(KeyCode.D) && neck != null)
         {
             float rotationAmount = headRotationSpeed * Time.deltaTime;
             float newRotation = currentRotationZ + rotationAmount;
-
-            // 회전 각도를 -60 ~ 60도로 제한
             if (newRotation <= 60f)
             {
                 neck.Rotate(0, 0, rotationAmount, Space.Self);
                 currentRotationZ = Mathf.Clamp(newRotation, -60f, 60f);
             }
         }
-        // 머리 위치 조정
+
         if (Input.GetKey(KeyCode.UpArrow) && scull != null)
         {
             Vector3 currentPosition = scull.localPosition;
@@ -181,95 +163,96 @@ public class HorseControl : MonoBehaviour
             newYPosition = Mathf.Clamp(newYPosition, minY, maxY);
             scull.localPosition = new Vector3(currentPosition.x, newYPosition, currentPosition.z);
         }
+
+        // [중요] 회전 함수 호출
         ApplyTurnForce();
     }
 
-    // 다리가 바닥을 밀 때 힘을 추가하는 함수
     private void ApplyPushForce(Transform leg)
     {
         Debug.DrawRay(leg.position, transform.forward * 2f, Color.blue, 1f);
-        // 다리가 바닥에 닿아 있는지 확인
         RaycastHit hit;
         if (Physics.Raycast(leg.position, Vector3.down, out hit, 1f))
         {
-            // 다리가 바닥을 밀면서 앞으로 힘 추가
             Vector3 forwardForce = -transform.forward * pushForce * Time.deltaTime;
             rb.AddForceAtPosition(forwardForce, leg.position, ForceMode.Force);
         }
     }
 
-    // 방향 전환을 위한 회전을 추가하는 함수
+    // [수정됨] 방향 전환 함수
     private void ApplyTurnForce()
     {
-        bool wasTurning = isTurning; // 이전 프레임에서 회전 중이었는지 저장
-        isTurning = false; // 현재 프레임에서 회전 여부를 초기화
+        bool wasTurning = isTurning;
+        isTurning = false;
 
-        // 왼쪽 회전 조건
-        if (Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.P) && !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.O))
+        bool isTurningLeft = Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.P) && !Input.GetKey(KeyCode.Q) && !Input.GetKey(KeyCode.O);
+        bool isTurningRight = Input.GetKey(KeyCode.Q) && Input.GetKey(KeyCode.O) && !Input.GetKey(KeyCode.E) && !Input.GetKey(KeyCode.P);
+
+        if (isTurningLeft || isTurningRight)
         {
-            // Y축 회전 고정 해제
-            rb.constraints = defaultConstraints & ~RigidbodyConstraints.FreezeRotationY;
-
-            Debug.DrawRay(transform.position, transform.right * 2f, Color.green, 1f); // 왼쪽 회전 방향 디버깅
-            rb.AddTorque(Vector3.up * turnTorque * Time.deltaTime, ForceMode.Force); // 왼쪽 회전
             isTurning = true;
-        }
-        // 오른쪽 회전 조건
-        else if (Input.GetKey(KeyCode.Q) && Input.GetKey(KeyCode.O) && !Input.GetKey(KeyCode.E) && !Input.GetKey(KeyCode.P))
-        {
-            // Y축 회전 고정 해제
-            rb.constraints = defaultConstraints & ~RigidbodyConstraints.FreezeRotationY;
 
-            Debug.DrawRay(transform.position, -transform.right * 2f, Color.red, 1f); // 오른쪽 회전 방향 디버깅
-            rb.AddTorque(Vector3.up * -turnTorque * Time.deltaTime, ForceMode.Force); // 오른쪽 회전
-            isTurning = true;
+            // [수정됨] 회전 시에는 X, Z만 고정하고 Y는 풉니다.
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+            if (isTurningLeft)
+            {
+                Debug.DrawRay(transform.position, transform.right * 2f, Color.green, 1f);
+                rb.AddTorque(Vector3.up * turnTorque * Time.deltaTime, ForceMode.Force);
+            }
+            else if (isTurningRight)
+            {
+                Debug.DrawRay(transform.position, -transform.right * 2f, Color.red, 1f);
+                rb.AddTorque(Vector3.up * -turnTorque * Time.deltaTime, ForceMode.Force);
+            }
         }
 
-        // 회전이 끝났다면 Y축 회전 고정 복원
+        // [수정됨] 회전 키를 떼면 다시 모든 축(X, Y, Z)을 고정합니다.
         if (wasTurning && !isTurning)
         {
-            rb.constraints = defaultConstraints | RigidbodyConstraints.FreezeRotationY;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+            rb.angularVelocity = Vector3.zero; // 회전 관성을 즉시 제거하여 딱 멈추게 함
+        }
+
+        // 혹시 모를 상황을 대비해 회전 중이 아닐 때 강제로 고정
+        if (!isTurning)
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
         }
     }
-    // 바닥에 닿아 있는지 확인하는 함수 (다리별로 체크)
+
     private void CheckGrounded()
     {
-        int groundedLegs = 0; // 바닥에 닿은 다리 개수
-        float rayLength = 1f; // 각 다리에서 바닥까지의 레이 거리 (ApplyPushForce와 동일하게 설정)
+        int groundedLegs = 0;
+        float rayLength = 1f;
 
-        // 왼쪽 앞다리 체크
         if (frontShinL != null && Physics.Raycast(frontShinL.position, Vector3.down, rayLength, groundLayerMask))
         {
             groundedLegs++;
             Debug.DrawRay(frontShinL.position, Vector3.down * rayLength, Color.green, 0.1f);
         }
 
-        // 오른쪽 앞다리 체크
         if (frontShinR != null && Physics.Raycast(frontShinR.position, Vector3.down, rayLength, groundLayerMask))
         {
             groundedLegs++;
             Debug.DrawRay(frontShinR.position, Vector3.down * rayLength, Color.green, 0.1f);
         }
 
-        // 왼쪽 뒷다리 체크
         if (footL != null && Physics.Raycast(footL.position, Vector3.down, rayLength, groundLayerMask))
         {
             groundedLegs++;
             Debug.DrawRay(footL.position, Vector3.down * rayLength, Color.green, 0.1f);
         }
 
-        // 오른쪽 뒷다리 체크
         if (footR != null && Physics.Raycast(footR.position, Vector3.down, rayLength, groundLayerMask))
         {
             groundedLegs++;
             Debug.DrawRay(footR.position, Vector3.down * rayLength, Color.green, 0.1f);
         }
 
-        // 다리 2개 이상이 바닥에 닿았으면 grounded
         isGrounded = (groundedLegs >= 2);
     }
 
-    // 점프 함수
     private void Jump()
     {
         float chargedJumpForce = jumpForce * (1f + (chargeTime / maxChargeTime) * (chargeMultiplier - 1f));

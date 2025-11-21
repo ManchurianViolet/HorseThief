@@ -27,7 +27,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4251720331918608929}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.06717254, y: -0.7187682, z: 0.0701323, w: 0.68843424}
+  m_LocalRotation: {x: 0.05374785, y: -0.8289364, z: 0.08088169, w: 0.5508483}
   m_LocalPosition: {x: 4.5693865, y: 1.8531382, z: 1.6863384}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Composition:
-    ScreenPosition: {x: -0.20364287, y: 0.16176419}
+    ScreenPosition: {x: -0.02, y: 0.16176419}
     DeadZone:
       Enabled: 1
       Size: {x: 0.04573644, y: 0.08275857}
