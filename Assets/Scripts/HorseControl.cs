@@ -180,6 +180,7 @@ public class HorseControl : MonoBehaviour
     }
 
     // [수정됨] 방향 전환 함수
+    // 방향 전환 함수
     private void ApplyTurnForce()
     {
         bool wasTurning = isTurning;
@@ -192,9 +193,19 @@ public class HorseControl : MonoBehaviour
         {
             isTurning = true;
 
-            // [수정됨] 회전 시에는 X, Z만 고정하고 Y는 풉니다.
+            // 1. Y축 회전 고정 해제 (X, Z는 고정)
             rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
+            // 2. [⭐핵심 수정⭐] X, Z 축 각도를 0으로 강제 보정 (기울임 방지)
+            // 현재 Rigidbody의 Y축 회전은 유지하되, X와 Z는 0도로 설정합니다.
+            Quaternion currentRotation = rb.rotation;
+            float currentYAngle = currentRotation.eulerAngles.y;
+            Quaternion targetRotation = Quaternion.Euler(0f, currentYAngle, 0f);
+
+            // MoveRotation을 사용하여 물리적으로 안정적으로 각도를 보정합니다.
+            rb.MoveRotation(targetRotation);
+
+            // 3. 토크 적용 (기존 로직 유지)
             if (isTurningLeft)
             {
                 Debug.DrawRay(transform.position, transform.right * 2f, Color.green, 1f);
@@ -207,17 +218,17 @@ public class HorseControl : MonoBehaviour
             }
         }
 
-        // [수정됨] 회전 키를 떼면 다시 모든 축(X, Y, Z)을 고정합니다.
+        // 4. 회전 키를 떼면 다시 모든 축(X, Y, Z)을 고정하고 관성 제거
         if (wasTurning && !isTurning)
         {
-            rb.constraints = RigidbodyConstraints.FreezeRotation;
-            rb.angularVelocity = Vector3.zero; // 회전 관성을 즉시 제거하여 딱 멈추게 함
+            rb.constraints = defaultConstraints; // XYZ 고정 복귀
+            rb.angularVelocity = Vector3.zero;
         }
 
-        // 혹시 모를 상황을 대비해 회전 중이 아닐 때 강제로 고정
+        // 회전 중이 아닐 때 강제로 고정
         if (!isTurning)
         {
-            rb.constraints = RigidbodyConstraints.FreezeRotation;
+            rb.constraints = defaultConstraints;
         }
     }
 

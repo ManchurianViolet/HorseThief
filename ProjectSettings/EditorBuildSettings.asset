@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/PreviousProject/KYC/TitleSceen.unity
     guid: 8fb6346f292198843aa018d9e2c190d3
   - enabled: 1
-    path: Assets/Scenes/HowToPlay Scene.unity
+    path: Assets/PreviousProject/HowToPlay Scene.unity
     guid: 1f8f316625d6d0e4980e6638e85d6b36
   - enabled: 1
     path: Assets/Scenes/LaserStage.unity
