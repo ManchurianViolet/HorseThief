@@ -29,7 +29,9 @@ public class HorseControl : MonoBehaviour
 
     private bool isTurning = false;
     private RigidbodyConstraints defaultConstraints;
-
+    [Header("Ground Check")]
+    [SerializeField] private float groundCheckDistance = 0.2f; // 감지 거리 (너무 길면 안 내려감, 너무 짧으면 뚫림)
+    [SerializeField] private LayerMask obstacleLayer; // 감지할 대상 (책상, 바닥 등)
     void Start()
     {
         rb = GetComponent<Rigidbody>();

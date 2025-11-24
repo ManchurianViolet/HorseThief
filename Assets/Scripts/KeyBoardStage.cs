@@ -2,98 +2,158 @@
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
+// SceneManager는 더 이상 필요 없으므로 삭제하거나 유지해도 됨
 
 public class KeyBoardStage : MonoBehaviour
 {
-    [Header("UI Components")]
-    [SerializeField] private TextMeshPro playerTyping;      // 플레이어가 입력 중인 텍스트
-    [SerializeField] private TextMeshPro successMessage;    // "Next Word in..." 메시지 표시용
-    [SerializeField] private TextMeshPro title;             // 타이틀 (필요 없다면 비활성)
-    [SerializeField] private TextMeshProUGUI question;      // 문제(PassWord) 표시
-    [SerializeField] private TextMeshProUGUI timerDisplay;  // 경과 시간 표시 UI
+    [Header("Training Settings")]
+    [SerializeField] private Transform playPosition; // 방 안의 박스 위치 (순간이동 타겟)
+    [SerializeField] private GameObject gameUIPanel; // 텍스트, 타이머 등을 묶은 부모 오브젝트 (평소엔 꺼둠)
+    [SerializeField] private Transform getoutPosition; // 방 나갔을때 박스 위치
+    private GameObject currentPlayer;
 
-    // [삭제됨] nextStagePortal, endStage (더 이상 사용 안 함)
+    [Header("UI Components")]
+    [SerializeField] private TextMeshPro playerTyping;
+    [SerializeField] private TextMeshPro successMessage;
+    // title은 굳이 제어 안 해도 되지만, 훈련 시작 시 켜고 싶다면 추가
+    [SerializeField] private TextMeshProUGUI question;
+    [SerializeField] private TextMeshProUGUI timerDisplay;
 
     [Header("Input Settings")]
-    public GameObject[] Keys; // 가상 키보드 버튼들
+    public GameObject[] Keys;
     [SerializeField] private AudioSource keyAudioSource;
     [SerializeField] private AudioClip keyPressSound;
 
     // 내부 상태 변수
-    private bool isSuccess = false;     // 정답을 맞췄는지 (맞추면 대기 상태)
-    private float currentTime = 0f;     // 경과 시간 (0초부터 시작)
-    private Coroutine timerCoroutine;   // 타이머 코루틴 참조
-    private Coroutine blinkCoroutine;   // 커서 코루틴 참조
+    private bool isTrainingActive = false; // ★ 현재 훈련 중인가?
+    private bool isSuccess = false;
+    private float currentTime = 0f;
+    private Coroutine timerCoroutine;
+    private Coroutine blinkCoroutine;
 
-    private string inputText = "";      // 입력된 텍스트
+    private string inputText = "";
     private bool isCursorVisible = true;
     private string cursorChar = "|";
     private float blinkInterval = 0.5f;
     private bool isShiftPressed = false;
 
     // 단어 리스트
-    private List<string> targetPhrases = new List<string>()
-    {
-        "a", "y", "b"
-    };
+    private List<string> targetPhrases = new List<string>() { "a", "y", "b" };
     private string currentTargetPhrase;
 
     void Start()
     {
-        // 오디오 소스 초기화
+        // 오디오 초기화
         if (keyAudioSource == null)
         {
             keyAudioSource = GetComponent<AudioSource>();
             if (keyAudioSource == null) keyAudioSource = gameObject.AddComponent<AudioSource>();
         }
 
-        // 초기 메시지 숨김
+        // ★ [변경점] 시작하자마자 게임을 켜지 않음!
+        // 대신 UI를 숨기고 대기 상태로 만듭니다.
+        if (gameUIPanel != null) gameUIPanel.SetActive(false);
         if (successMessage != null) successMessage.gameObject.SetActive(false);
 
-        // 커서 시작
-        blinkCoroutine = StartCoroutine(BlinkCursor());
-
-        // ★ 첫 라운드 시작
-        StartRound();
+        // 커서는 미리 깜빡거려도 상관없지만, 훈련 때만 켜는 게 자연스러움
+        // 여기서는 일단 멈춰둠
     }
 
     void Update()
     {
-        // ★ R키로 강제 재시작 (디버깅용, 필요 시 유지)
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        }
+        // ★ 훈련 중이 아니면 아무것도 하지 않음 (키 입력도 안 받음)
+        if (!isTrainingActive) return;
 
-        // 정답 체크 (성공 상태가 아닐 때만)
+        // 정답 체크
         if (!isSuccess && inputText == currentTargetPhrase)
         {
-            HandleSuccess(); // 정답 처리 함수 호출
+            HandleSuccess();
+        }
+
+        // (선택사항) ESC 누르면 훈련 포기하고 나가는 기능 추가 가능
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            StopTraining();
         }
     }
 
     // ====================================================
-    // ★ 핵심 로직: 라운드 시작 및 타이머 관리
+    // ★ [핵심] 외부(트리거)에서 호출할 시작 함수
+    // ====================================================
+    public void StartTraining(GameObject player)
+    {
+        isTrainingActive = true;
+        currentPlayer = player; // ★ 플레이어 정보를 저장해둡니다.
+        // 1. 플레이어 순간이동 (방 안의 박스 위치로)
+        if (player != null && playPosition != null)
+        {
+            // 리지드바디가 있다면 물리력을 잠시 꺼야 안전하게 이동됨
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+
+            player.transform.position = playPosition.position;
+            player.transform.rotation = playPosition.rotation; // 방향도 맞춰줌
+
+            if (rb != null) rb.isKinematic = false;
+        }
+
+        // 2. UI 켜기
+        if (gameUIPanel != null) gameUIPanel.SetActive(true);
+
+        // 3. 커서 코루틴 시작
+        if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
+        blinkCoroutine = StartCoroutine(BlinkCursor());
+
+        // 4. 게임 로직 시작 (기존 StartRound 호출)
+        StartRound();
+    }
+
+    // 훈련 강제 종료 (나가기)
+    public void StopTraining()
+    {
+        isTrainingActive = false;
+
+        if (gameUIPanel != null) gameUIPanel.SetActive(false);
+        if (timerCoroutine != null) StopCoroutine(timerCoroutine);
+
+        // ★ 플레이어를 문 밖(getoutPosition)으로 이동시키는 로직
+        if (currentPlayer != null && getoutPosition != null)
+        {
+            Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
+
+            // 순간이동 시 물리 충돌 방지를 위해 Kinematic 켬
+            if (rb != null) rb.isKinematic = true;
+
+            // 위치와 회전 이동
+            currentPlayer.transform.position = getoutPosition.position;
+            currentPlayer.transform.rotation = getoutPosition.rotation;
+
+            // 물리 다시 원상복구
+            if (rb != null) rb.isKinematic = false;
+
+            // 훈련이 끝났으니 플레이어 참조 해제
+            currentPlayer = null;
+        }
+    }
+
+    // ====================================================
+    // 기존 로직 (StartRound, Timer 등)
     // ====================================================
 
     private void StartRound()
     {
-        // 1. 변수 초기화
-        isSuccess = false;          // 입력 가능 상태로 변경
-        currentTime = 0f;           // 시간 0초로 리셋
-        inputText = "";             // 입력 텍스트 초기화
-        isShiftPressed = false;     // 쉬프트 초기화
+        if (!isTrainingActive) return; // 안전장치
 
-        // 2. 새 단어 선택
+        isSuccess = false;
+        currentTime = 0f;
+        inputText = "";
+        isShiftPressed = false;
+
         SetRandomTargetPhrase();
-
-        // 3. UI 업데이트
         UpdateTextDisplay();
         UpdateTimerDisplay();
         if (successMessage != null) successMessage.gameObject.SetActive(false);
 
-        // 4. 타이머 코루틴 시작 (스톱워치)
         if (timerCoroutine != null) StopCoroutine(timerCoroutine);
         timerCoroutine = StartCoroutine(RunStopwatch());
     }
@@ -104,62 +164,44 @@ public class KeyBoardStage : MonoBehaviour
         {
             int randomIndex = Random.Range(0, targetPhrases.Count);
             currentTargetPhrase = targetPhrases[randomIndex];
-
-            // 대소문자 구분을 명확히 하기 위해 표시는 그대로, 비교도 그대로
             if (question != null) question.text = $"PassWord: {currentTargetPhrase}";
         }
     }
 
-    // ★ 스톱워치 코루틴 (0초부터 증가)
     private IEnumerator RunStopwatch()
     {
-        while (!isSuccess) // 정답을 맞추기 전까지 계속 돔
+        while (!isSuccess && isTrainingActive) // 훈련 중일 때만
         {
-            currentTime += Time.deltaTime; // 시간 증가
+            currentTime += Time.deltaTime;
             UpdateTimerDisplay();
             yield return null;
         }
-        // 정답을 맞추면 while문 탈출 -> 타이머 자동 정지
     }
 
     private void UpdateTimerDisplay()
     {
-        if (timerDisplay != null)
-        {
-            // 소수점 한 자리까지 표시 (예: Time: 12.5)
-            timerDisplay.text = $"Time: {currentTime:F1}";
-            timerDisplay.color = Color.white; // 색상은 항상 흰색 (경고 필요 없음)
-        }
+        if (timerDisplay != null) timerDisplay.text = $"Time: {currentTime:F1}";
     }
-
-    // ====================================================
-    // ★ 정답 처리 및 다음 라운드 대기
-    // ====================================================
 
     private void HandleSuccess()
     {
-        isSuccess = true; // 이 시점부터 AddCharacter 입력이 막힘 & 타이머 while문 종료
-
-        // 성공 효과음 (있다면)
-        // if (keyAudioSource != null) keyAudioSource.PlayOneShot(successClip);
-
-        // 다음 라운드 카운트다운 시작
+        isSuccess = true;
         StartCoroutine(PrepareNextRound());
     }
 
     private IEnumerator PrepareNextRound()
     {
-        // 메시지 활성화
         if (successMessage != null)
         {
             successMessage.gameObject.SetActive(true);
             successMessage.color = Color.green;
         }
 
-        // 5초 카운트다운
         int countdown = 5;
         while (countdown > 0)
         {
+            if (!isTrainingActive) yield break; // 훈련 종료 시 코루틴 중단
+
             if (successMessage != null)
                 successMessage.text = $"Next Word in {countdown}...";
 
@@ -167,31 +209,20 @@ public class KeyBoardStage : MonoBehaviour
             countdown--;
         }
 
-        // 카운트다운 끝 -> 다음 라운드 즉시 시작
         StartRound();
     }
 
-    // ====================================================
-    // ★ 입력 처리 (기존 로직 유지)
-    // ====================================================
-
+    // 입력 처리 (isTrainingActive 체크 추가)
     public void AddCharacter(string character)
     {
-        // 성공 상태(대기 시간)에는 입력 무시
-        if (isSuccess) return;
+        if (!isTrainingActive || isSuccess) return;
 
         if (playerTyping != null)
         {
-            if (character == "Space")
-            {
-                inputText += " ";
-            }
+            if (character == "Space") inputText += " ";
             else if (character == "BackSpace")
             {
-                if (inputText.Length > 0)
-                {
-                    inputText = inputText.Substring(0, inputText.Length - 1);
-                }
+                if (inputText.Length > 0) inputText = inputText.Substring(0, inputText.Length - 1);
             }
             else
             {
@@ -199,12 +230,11 @@ public class KeyBoardStage : MonoBehaviour
                 if (isShiftPressed)
                 {
                     charToAdd = character.ToUpper();
-                    isShiftPressed = false; // 한 글자 쓰고 시프트 해제
+                    isShiftPressed = false;
                 }
                 inputText += charToAdd;
             }
-
-            PlayKeyPressSound(); // 키 소리 재생
+            PlayKeyPressSound();
             UpdateTextDisplay();
         }
     }
@@ -212,14 +242,12 @@ public class KeyBoardStage : MonoBehaviour
     private void UpdateTextDisplay()
     {
         if (playerTyping != null)
-        {
             playerTyping.text = inputText + (isCursorVisible ? cursorChar : "");
-        }
     }
 
     private IEnumerator BlinkCursor()
     {
-        while (true)
+        while (isTrainingActive)
         {
             isCursorVisible = !isCursorVisible;
             UpdateTextDisplay();
@@ -229,15 +257,13 @@ public class KeyBoardStage : MonoBehaviour
 
     public void ToggleShift()
     {
-        if (isSuccess) return;
+        if (!isTrainingActive || isSuccess) return;
         isShiftPressed = !isShiftPressed;
     }
 
     public void PlayKeyPressSound()
     {
         if (keyAudioSource != null && keyPressSound != null)
-        {
             keyAudioSource.PlayOneShot(keyPressSound);
-        }
     }
 }
