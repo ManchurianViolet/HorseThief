@@ -1,11 +1,14 @@
 using UnityEngine;
-// Button, UI 관련 네임스페이스도 더 이상 필요 없지만 둬도 상관없습니다.
 
 public class TrainingEntrance : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private GameObject interactionUI;   // "[F] 입장하기" 안내 텍스트
-    [SerializeField] private KeyBoardStage keyBoardStage; // 훈련장 매니저
+
+    [Header("Training Managers (하나만 연결하세요)")]
+    [SerializeField] private KeyBoardStage keyBoardStage; // 타자 훈련장일 경우 연결
+    [SerializeField] private PaperPainter paperPainter;   // 그림 훈련장일 경우 연결
+    // [SerializeField] private RacingManager racingManager; // 나중에 레이싱 만들면 주석 해제
 
     // 내부 변수
     private GameObject playerObj;
@@ -13,13 +16,12 @@ public class TrainingEntrance : MonoBehaviour
 
     private void Start()
     {
-        // 시작 시 안내 문구 끄기
         if (interactionUI != null) interactionUI.SetActive(false);
     }
 
     private void Update()
     {
-        // 플레이어가 근처에 있고 + F 키를 눌렀을 때 -> ★즉시 시작★
+        // 플레이어가 근처에 있고 + F 키를 눌렀을 때
         if (isPlayerNear && Input.GetKeyDown(KeyCode.F))
         {
             StartGameDirectly();
@@ -28,15 +30,37 @@ public class TrainingEntrance : MonoBehaviour
 
     private void StartGameDirectly()
     {
-        if (playerObj != null && keyBoardStage != null)
+        if (playerObj == null) return;
+
+        bool isStarted = false;
+
+        // 1. 타자 훈련장이 연결되어 있다면?
+        if (keyBoardStage != null)
         {
-            // 1. 안내 문구 끄기 (게임 시작하니까)
-            if (interactionUI != null) interactionUI.SetActive(false);
-
-            // 2. 훈련 시작 명령 바로 내리기
             keyBoardStage.StartTraining(playerObj);
+            isStarted = true;
+            Debug.Log("타자 훈련 입장!");
+        }
+        // 2. 그림 훈련장이 연결되어 있다면?
+        else if (paperPainter != null)
+        {
+            paperPainter.StartTraining(playerObj); // PaperPainter에도 StartTraining 함수가 있어야 함
+            isStarted = true;
+            Debug.Log("그림 훈련 입장!");
+        }
+        // 3. 나중에 레이싱 등 추가...
+        /*
+        else if (racingManager != null)
+        {
+            racingManager.StartTraining(playerObj);
+            isStarted = true;
+        }
+        */
 
-            Debug.Log("훈련 즉시 입장!");
+        // 훈련이 시작되었다면 안내 문구 끄기
+        if (isStarted)
+        {
+            if (interactionUI != null) interactionUI.SetActive(false);
         }
     }
 

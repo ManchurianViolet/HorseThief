@@ -1,76 +1,84 @@
 using UnityEngine;
+using TMPro; // UI 텍스트 사용을 위해 필수
 
 public class PaperPainter : MonoBehaviour
 {
+    [Header("=== Hideout Integration Settings ===")]
+    [SerializeField] private Transform playPosition;   // 붓 잡는 위치
+    [SerializeField] private Transform getOutPosition; // 나갈 위치
+    [SerializeField] private GameObject gameUIPanel;   // 미술 UI 부모 패널
+
+    [Header("=== New UI Settings ===")]
+    [SerializeField] private TextMeshProUGUI accuracyText; // ★ 점수 표시할 UI 텍스트 (UGUI)
+
+    [Header("=== Reference Settings ===")]
+    [SerializeField] private Renderer referenceRenderer; // ★ 완성된 그림을 보여줄 옆쪽 종이 (그리기 불가)
+    [SerializeField] private Texture2D[] targetGallery;  // ★ 목표 그림들을 넣어두는 배열
+
+    [Header("=== Painting Settings ===")]
     public Color paintColor = Color.blue;
-
-    [SerializeField] private Texture2D paperTexture;
-    [SerializeField] private Texture2D targetPicture;
-    [SerializeField] private Texture2D happyMonkPicture;
-    [SerializeField] private GameObject portal;
-    [SerializeField] private PaintingStartTrigger paintingStartTrigger;
+    [SerializeField] private Texture2D paperTexture;     // 깨끗한 도화지 텍스처
     [SerializeField] private float brushSize = 20f;
-    [SerializeField] private int successAccuracyRatio = 75;
-    [SerializeField] private bool isThisPaperCheckRatio = true;
-
-    // 성능 관련 설정
-    [SerializeField] private float checkInterval = 1.0f;
     [SerializeField] private bool useDelayedCheck = true;
+    [SerializeField] private float checkInterval = 1.0f;
 
-    // 도화지 배경색 설정
-    [SerializeField] private Color paperBackgroundColor = new Color(0.9f, 0.85f, 0.7f, 1f); // 구릿빛 베이지
-    [SerializeField] private bool useTintedPaper = true; // 색깔 있는 도화지 사용 여부
+    [Header("=== Paper Options ===")]
+    [SerializeField] private Color paperBackgroundColor = new Color(0.9f, 0.85f, 0.7f, 1f);
+    [SerializeField] private bool useTintedPaper = true;
 
-    private Texture2D modifiableTexture;
-    private Renderer paperRenderer;
+    // 내부 상태 변수
+    private GameObject currentPlayer;
+    private bool isTrainingActive = false;
+
+    private Texture2D modifiableTexture; // 실제 그려지는 텍스처
+    private Renderer myRenderer;         // 내(도화지) 렌더러
+    private Texture2D currentTarget;     // 현재 선택된 목표 그림
 
     private Color[] targetPixels;
     private bool[] pixelChecked;
     private int correctPixelsCount = 0;
     private int totalTargetAreaPixels = 0;
-    private int totalWhiteAreaPixels = 0; // 흰색 영역 픽셀 수
+    private int totalWhiteAreaPixels = 0;
 
-    private bool isSuccessTriggered = false;
     private bool isPainting = false;
     private bool needsRecalculation = false;
     private float lastCheckTime = 0f;
     private float paintEndTime = 0f;
 
-    // 목표 그림 미리보기 관련
-    private bool isShowingTarget = false;
-
     private void Start()
     {
-        Debug.Log($"Paper 크기: {paperTexture.width}x{paperTexture.height}");
-        Debug.Log($"Target 크기: {targetPicture.width}x{targetPicture.height}");
+        myRenderer = GetComponent<Renderer>();
 
-        SaveOriginalTexture();
+        // 시작 시 UI와 기능 꺼두기
+        if (gameUIPanel != null) gameUIPanel.SetActive(false);
 
-        if (targetPicture != null)
-        {
-            PrepareTargetTexture();
-        }
-        else
-        {
-            Debug.LogError("targetPicture가 할당되지 않았습니다.");
-        }
+        // 초기 도화지 생성 (하얗게 만들기)
+        CreateCleanCanvas();
     }
 
     private void Update()
     {
-        // T키: 목표 그림 보기/숨기기
-        if (Input.GetKeyDown(KeyCode.T))
+        if (!isTrainingActive) return;
+
+        // Y키: 새로운 그림 랜덤 뽑기 & 초기화
+        if (Input.GetKeyDown(KeyCode.Y))
         {
-            ToggleTargetPreview();
+            SetNewRandomPainting();
         }
 
-        // C키: 정답 자동 완성 (치트)
+        // C키: 치트 (테스트용 - 현재 목표 그림으로 바로 완성)
         if (Input.GetKeyDown(KeyCode.C))
         {
             AutoCompleteTarget();
         }
 
-        // 붓을 뗀 후 약간의 딜레이를 두고 체크
+        // ESC키: 훈련 종료
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            StopTraining();
+        }
+
+        // 붓 뗀 후 정확도 체크 (딜레이)
         if (useDelayedCheck && needsRecalculation && !isPainting)
         {
             if (Time.time - paintEndTime >= 0.2f && Time.time - lastCheckTime >= checkInterval)
@@ -82,154 +90,86 @@ public class PaperPainter : MonoBehaviour
         }
     }
 
-    // T키: 목표 그림 토글
-    private void ToggleTargetPreview()
+    // ====================================================
+    // ★ 외부 호출 및 초기화 로직
+    // ====================================================
+    public void StartTraining(GameObject player)
     {
-        isShowingTarget = !isShowingTarget;
+        isTrainingActive = true;
+        currentPlayer = player;
 
-        if (isShowingTarget)
+        // 1. 플레이어 이동
+        if (currentPlayer != null && playPosition != null)
         {
-            paperRenderer.material.mainTexture = targetPicture;
-            Debug.Log("목표 그림 표시 중 (T키로 다시 숨기기)");
+            Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+            currentPlayer.transform.position = playPosition.position;
+            currentPlayer.transform.rotation = playPosition.rotation;
+            if (rb != null) rb.isKinematic = false;
+        }
+
+        // 2. UI 켜기
+        if (gameUIPanel != null) gameUIPanel.SetActive(true);
+
+        // 3. ★ 입장하자마자 랜덤 그림 세팅
+        SetNewRandomPainting();
+    }
+
+    public void StopTraining()
+    {
+        isTrainingActive = false;
+        if (gameUIPanel != null) gameUIPanel.SetActive(false);
+
+        if (currentPlayer != null && getOutPosition != null)
+        {
+            Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+            currentPlayer.transform.position = getOutPosition.position;
+            currentPlayer.transform.rotation = getOutPosition.rotation;
+            if (rb != null) rb.isKinematic = false;
+            currentPlayer = null;
+        }
+    }
+
+    // ★ 랜덤 그림 뽑기 및 초기화 함수
+    private void SetNewRandomPainting()
+    {
+        Debug.Log("새로운 그림을 세팅합니다.");
+
+        // 1. 도화지 깨끗하게 밀기
+        CreateCleanCanvas();
+
+        // 2. 갤러리에서 랜덤 하나 뽑기
+        if (targetGallery != null && targetGallery.Length > 0)
+        {
+            int randomIndex = Random.Range(0, targetGallery.Length);
+            currentTarget = targetGallery[randomIndex];
+
+            // 3. ★ 옆에 있는 '참고용 종이'에 목표 그림 띄우기 (그리는 곳 아님!)
+            if (referenceRenderer != null)
+            {
+                referenceRenderer.material.mainTexture = currentTarget;
+            }
+
+            // 4. 목표 데이터 분석 (점수 계산용)
+            PrepareTargetData(currentTarget);
         }
         else
         {
-            paperRenderer.material.mainTexture = modifiableTexture;
-            Debug.Log("현재 그린 그림으로 복귀");
-        }
-    }
-
-    // C키: 정답 자동 완성
-    private void AutoCompleteTarget()
-    {
-        Debug.Log("정답 자동 완성 중...");
-
-        for (int y = 0; y < modifiableTexture.height; y++)
-        {
-            for (int x = 0; x < modifiableTexture.width; x++)
-            {
-                float scale = (float)targetPicture.width / modifiableTexture.width;
-                int targetX = Mathf.Min((int)(x * scale), targetPicture.width - 1);
-                int targetY = Mathf.Min((int)(y * scale), targetPicture.height - 1);
-
-                Color targetColor = targetPicture.GetPixel(targetX, targetY);
-                modifiableTexture.SetPixel(x, y, targetColor);
-            }
+            Debug.LogError("Target Gallery가 비어있습니다! 인스펙터에서 그림을 추가해주세요.");
         }
 
-        modifiableTexture.Apply();
-        paperRenderer.material.mainTexture = modifiableTexture;
-        isShowingTarget = false;
-
-        Debug.Log("정답 완성! 이게 목표 그림입니다.");
-
-        // 정확도도 재계산
-        needsRecalculation = true;
-        RecalculateAccuracy();
-    }
-
-    private void PrepareTargetTexture()
-    {
-        Debug.Log("PrepareTargetTexture 시작!");
-
-        if (!targetPicture.isReadable)
-        {
-            Debug.LogError("Target Picture의 Import Settings에서 'Read/Write Enabled'를 체크해야 합니다.");
-            return;
-        }
-
-        targetPixels = targetPicture.GetPixels();
-        pixelChecked = new bool[modifiableTexture.width * modifiableTexture.height];
-        totalTargetAreaPixels = 0;
-        totalWhiteAreaPixels = 0; // 초기화 추가
-
-        for (int y = 0; y < modifiableTexture.height; y++)
-        {
-            for (int x = 0; x < modifiableTexture.width; x++)
-            {
-                float scale = (float)targetPicture.width / modifiableTexture.width;
-                int targetX = Mathf.Min((int)(x * scale), targetPicture.width - 1);
-                int targetY = Mathf.Min((int)(y * scale), targetPicture.height - 1);
-                int targetIndex = targetY * targetPicture.width + targetX;
-
-                Color targetColor = targetPixels[targetIndex];
-                float brightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
-
-                // 색깔 도화지 모드: 모든 영역을 칠해야 함
-                if (useTintedPaper)
-                {
-                    totalTargetAreaPixels++; // 모든 픽셀 카운트
-
-                    // 디버그: 처음 몇 개만 로그
-                    if (totalTargetAreaPixels <= 5)
-                    {
-                        Debug.Log($"픽셀({x},{y}) 카운트 중... 현재 total: {totalTargetAreaPixels}");
-                    }
-                }
-                else
-                {
-                    // 기존 방식: 어두운 영역만
-                    if (brightness < 0.8f)
-                    {
-                        totalTargetAreaPixels++;
-                    }
-                    else
-                    {
-                        totalWhiteAreaPixels++;
-                    }
-                }
-            }
-        }
-
-        Debug.Log($"칠해야 할 총 픽셀 수: {totalTargetAreaPixels}");
-        Debug.Log($"흰색 영역 픽셀 수: {totalWhiteAreaPixels}");
-        Debug.Log($"색깔 도화지 모드: {useTintedPaper}");
-        Debug.Log($"전체 픽셀 수: {modifiableTexture.width * modifiableTexture.height}");
-
-        CheckInitialWhiteAreas();
-    }
-
-    private void CheckInitialWhiteAreas()
-    {
+        // 5. 점수 초기화 및 UI 갱신
         correctPixelsCount = 0;
-
-        // 색깔 있는 도화지를 사용하면 흰색 영역도 칠해야 함
-        if (useTintedPaper)
-        {
-            Debug.Log("색깔 도화지 모드: 모든 영역을 칠해야 합니다 (흰색 포함)");
-            return; // 초기 정확도 체크 건너뛰기
-        }
-
-        for (int y = 0; y < modifiableTexture.height; y++)
-        {
-            for (int x = 0; x < modifiableTexture.width; x++)
-            {
-                int paperIndex = y * modifiableTexture.width + x;
-
-                float scale = (float)targetPicture.width / modifiableTexture.width;
-                int targetX = Mathf.Min((int)(x * scale), targetPicture.width - 1);
-                int targetY = Mathf.Min((int)(y * scale), targetPicture.height - 1);
-                int targetIndex = targetY * targetPicture.width + targetX;
-
-                Color targetColor = targetPixels[targetIndex];
-                Color currentColor = modifiableTexture.GetPixel(x, y);
-
-                float targetBrightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
-                float currentBrightness = (currentColor.r + currentColor.g + currentColor.b) / 3f;
-
-                if (targetBrightness >= 0.8f && currentBrightness >= 0.8f)
-                {
-                    pixelChecked[paperIndex] = true;
-                }
-            }
-        }
-
-        Debug.Log($"초기 정확도: {correctPixelsCount}/{totalTargetAreaPixels}");
-        paintingStartTrigger.ChangePercentText(CalculateAccuracy());
+        UpdateAccuracyUI(0f);
     }
 
+    // ====================================================
+    // ★ 그리기 로직 (참고용 종이 보호 포함)
+    // ====================================================
     private void OnTriggerEnter(Collider _other)
     {
+        if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
             isPainting = true;
@@ -239,6 +179,7 @@ public class PaperPainter : MonoBehaviour
 
     private void OnTriggerStay(Collider _other)
     {
+        if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
             TriggerCheck(_other.gameObject);
@@ -247,11 +188,12 @@ public class PaperPainter : MonoBehaviour
 
     private void OnTriggerExit(Collider _other)
     {
+        if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
             isPainting = false;
             paintEndTime = Time.time;
-
+            // 붓 뗄 때 즉시 체크 옵션이 꺼져있으면 여기서 체크 예약
             if (!useDelayedCheck && needsRecalculation)
             {
                 if (Time.time - lastCheckTime >= checkInterval)
@@ -267,60 +209,34 @@ public class PaperPainter : MonoBehaviour
     private void TriggerCheck(GameObject _checkObject)
     {
         Vector3 brushPos = _checkObject.transform.position;
-        Vector3 direction = transform.up;
+        Vector3 direction = transform.up; // 도화지의 앞면 방향
         Ray ray1 = new Ray(brushPos, direction);
         Ray ray2 = new Ray(brushPos, -direction);
         RaycastHit hit;
 
+        // ★ [중요] 레이캐스트로 붓 위치에서 도화지를 찾습니다.
         if (Physics.Raycast(ray1, out hit, 1.5f, LayerMask.GetMask("Paper")) ||
             Physics.Raycast(ray2, out hit, 1.5f, LayerMask.GetMask("Paper")))
         {
-            PaintAtPosition(hit.point);
-        }
-    }
-
-    private void SaveOriginalTexture()
-    {
-        paperRenderer = GetComponent<Renderer>();
-        bool useMipMap = paperTexture.mipmapCount > 1;
-        modifiableTexture = new Texture2D(paperTexture.width, paperTexture.height, TextureFormat.RGBA32, useMipMap);
-
-        // 색깔 있는 도화지로 만들기
-        if (useTintedPaper)
-        {
-            Color[] pixels = paperTexture.GetPixels();
-            for (int i = 0; i < pixels.Length; i++)
+            // ★★★ [안전장치] ★★★
+            // 부딪힌 놈(hit.collider.gameObject)이 '나(gameObject)' 일 때만 그립니다.
+            // 옆에 있는 참고용 종이에 닿았다면 이 조건문이 false가 되어 무시합니다.
+            if (hit.collider.gameObject == this.gameObject)
             {
-                // 흰색 픽셀을 구릿빛으로 변경
-                if (pixels[i].r > 0.9f && pixels[i].g > 0.9f && pixels[i].b > 0.9f)
-                {
-                    pixels[i] = paperBackgroundColor;
-                }
+                PaintAtPosition(hit.point);
             }
-            modifiableTexture.SetPixels(pixels);
         }
-        else
-        {
-            modifiableTexture.SetPixels(paperTexture.GetPixels());
-        }
-
-        modifiableTexture.Apply();
-        paperRenderer.material.mainTexture = modifiableTexture;
     }
 
     private void PaintAtPosition(Vector3 _worldPos)
     {
-        if (targetPicture == null || targetPixels == null || totalTargetAreaPixels == 0) return;
+        if (!isTrainingActive) return;
+        if (currentTarget == null) return;
 
-        // 목표 그림을 보고 있을 때는 칠할 수 없음
-        if (isShowingTarget)
-        {
-            Debug.Log("목표 그림을 보는 중에는 칠할 수 없어요! T키를 눌러 돌아가세요.");
-            return;
-        }
-
+        // 월드 좌표 -> 텍스처 좌표 변환
         Vector3 localPos = transform.InverseTransformPoint(_worldPos);
         Vector2 uv = new Vector2((localPos.x / 10) + 0.5f, (localPos.z / 10) + 0.5f);
+
         if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) return;
         uv.x = 1f - uv.x;
         uv.y = 1f - uv.y;
@@ -329,6 +245,7 @@ public class PaperPainter : MonoBehaviour
         int y = (int)(uv.y * modifiableTexture.height);
         int brushSizeInt = Mathf.CeilToInt(brushSize);
 
+        // 브러시 크기만큼 픽셀 칠하기
         for (int i = -brushSizeInt; i <= brushSizeInt; i++)
         {
             for (int j = -brushSizeInt; j <= brushSizeInt; j++)
@@ -343,37 +260,12 @@ public class PaperPainter : MonoBehaviour
                     if (distance <= brushSize)
                     {
                         int paperIndex = pixelY * modifiableTexture.width + pixelX;
-
                         Color oldColor = modifiableTexture.GetPixel(pixelX, pixelY);
 
                         if (ColorDifference(oldColor, paintColor) > 0.01f)
                         {
-                            // 디버그: 브러시 중심점에서만 로그 출력
-                            if (i == 0 && j == 0)
-                            {
-                                float scale = (float)targetPicture.width / modifiableTexture.width;
-                                int targetX = Mathf.Min((int)(pixelX * scale), targetPicture.width - 1);
-                                int targetY = Mathf.Min((int)(pixelY * scale), targetPicture.height - 1);
-                                int targetIndex = targetY * targetPicture.width + targetX;
-                                Color targetColor = targetPixels[targetIndex];
-
-                                float colorDiff = ColorDifference(paintColor, targetColor);
-                                string verdict = colorDiff < 0.25f ? "✓ 정답!" : "✗ 틀림";
-
-                                float targetBrightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
-                                bool isWhiteArea = targetBrightness >= 0.8f;
-
-                                Debug.Log($"[칠하는 중] 픽셀({pixelX},{pixelY})\n" +
-                                         $"내 붓: {ColorToString(paintColor)}\n" +
-                                         $"목표: {ColorToString(targetColor)} {(isWhiteArea ? "(흰색 영역)" : "(색깔 영역)")}\n" +
-                                         $"차이: {colorDiff:F3} {verdict}\n" +
-                                         $"색깔 도화지 모드: {useTintedPaper}");
-                            }
-
-                            if (pixelChecked[paperIndex])
-                            {
-                                pixelChecked[paperIndex] = false;
-                            }
+                            if (pixelChecked != null && pixelChecked.Length > paperIndex)
+                                pixelChecked[paperIndex] = false; // 색이 바뀌면 다시 검사해야 함
 
                             modifiableTexture.SetPixel(pixelX, pixelY, paintColor);
                             needsRecalculation = true;
@@ -382,132 +274,162 @@ public class PaperPainter : MonoBehaviour
                 }
             }
         }
-
         modifiableTexture.Apply();
     }
 
-    private void RecalculateAccuracy()
+    // ====================================================
+    // ★ 텍스처 처리 및 정확도 계산
+    // ====================================================
+    private void CreateCleanCanvas()
     {
-        float startTime = Time.realtimeSinceStartup;
+        if (paperTexture == null) return;
 
-        correctPixelsCount = 0; // 리셋
+        bool useMipMap = paperTexture.mipmapCount > 1;
+        modifiableTexture = new Texture2D(paperTexture.width, paperTexture.height, TextureFormat.RGBA32, useMipMap);
+
+        if (useTintedPaper)
+        {
+            Color[] pixels = paperTexture.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                // 너무 밝은 부분(흰색)을 배경색으로 덮어씀
+                if (pixels[i].r > 0.9f && pixels[i].g > 0.9f && pixels[i].b > 0.9f)
+                    pixels[i] = paperBackgroundColor;
+            }
+            modifiableTexture.SetPixels(pixels);
+        }
+        else
+        {
+            modifiableTexture.SetPixels(paperTexture.GetPixels());
+        }
+
+        modifiableTexture.Apply();
+        myRenderer.material.mainTexture = modifiableTexture;
+    }
+
+    private void PrepareTargetData(Texture2D target)
+    {
+        if (!target.isReadable) { Debug.LogError($"'{target.name}' 텍스처의 Read/Write Enabled를 체크해주세요!"); return; }
+
+        targetPixels = target.GetPixels();
+        pixelChecked = new bool[modifiableTexture.width * modifiableTexture.height];
+        totalTargetAreaPixels = 0;
+        totalWhiteAreaPixels = 0;
 
         for (int y = 0; y < modifiableTexture.height; y++)
         {
             for (int x = 0; x < modifiableTexture.width; x++)
             {
-                int paperIndex = y * modifiableTexture.width + x;
+                float scale = (float)target.width / modifiableTexture.width;
+                int targetX = Mathf.Min((int)(x * scale), target.width - 1);
+                int targetY = Mathf.Min((int)(y * scale), target.height - 1);
+                int targetIndex = targetY * target.width + targetX;
 
-                float scale = (float)targetPicture.width / modifiableTexture.width;
-                int targetX = Mathf.Min((int)(x * scale), targetPicture.width - 1);
-                int targetY = Mathf.Min((int)(y * scale), targetPicture.height - 1);
-                int targetIndex = targetY * targetPicture.width + targetX;
+                Color targetColor = targetPixels[targetIndex];
+                float brightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
+
+                if (useTintedPaper) totalTargetAreaPixels++;
+                else { if (brightness < 0.8f) totalTargetAreaPixels++; else totalWhiteAreaPixels++; }
+            }
+        }
+
+        // 초기 상태(빈 도화지)의 점수 계산 (배경색이 정답과 같을 수도 있으니)
+        RecalculateAccuracy();
+    }
+
+    private void RecalculateAccuracy()
+    {
+        if (targetPixels == null) return;
+
+        correctPixelsCount = 0;
+        for (int y = 0; y < modifiableTexture.height; y++)
+        {
+            for (int x = 0; x < modifiableTexture.width; x++)
+            {
+                int paperIndex = y * modifiableTexture.width + x;
+                float scale = (float)currentTarget.width / modifiableTexture.width;
+                int targetX = Mathf.Min((int)(x * scale), currentTarget.width - 1);
+                int targetY = Mathf.Min((int)(y * scale), currentTarget.height - 1);
+                int targetIndex = targetY * currentTarget.width + targetX;
 
                 Color targetColor = targetPixels[targetIndex];
                 Color currentColor = modifiableTexture.GetPixel(x, y);
 
-                float targetBrightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
                 float colorDiff = ColorDifference(currentColor, targetColor);
+                float targetBrightness = (targetColor.r + targetColor.g + targetColor.b) / 3f;
 
-                // 색깔 도화지 모드: 모든 영역 체크
                 if (useTintedPaper)
                 {
-                    if (colorDiff < 0.25f) // 흰색 허용 오차를 위해 0.2에서 0.25로 증가
-                    {
-                        pixelChecked[paperIndex] = true;
-                        correctPixelsCount++;
-                    }
-                    else
-                    {
-                        pixelChecked[paperIndex] = false;
-                    }
+                    if (colorDiff < 0.25f) { pixelChecked[paperIndex] = true; correctPixelsCount++; }
+                    else { pixelChecked[paperIndex] = false; }
                 }
                 else
                 {
-                    // 기존 방식: 칠해야 하는 어두운 영역만 체크
-                    if (targetBrightness < 0.8f)
+                    if (targetBrightness < 0.8f) // 검은 선 부분
                     {
-                        if (colorDiff < 0.2f)
-                        {
-                            pixelChecked[paperIndex] = true;
-                            correctPixelsCount++;
-                        }
-                        else
-                        {
-                            pixelChecked[paperIndex] = false;
-                        }
+                        if (colorDiff < 0.2f) { pixelChecked[paperIndex] = true; correctPixelsCount++; }
+                        else { pixelChecked[paperIndex] = false; }
                     }
                 }
             }
         }
 
-        float elapsedTime = (Time.realtimeSinceStartup - startTime) * 1000f;
-        Debug.Log($"정확도 재계산 완료: {elapsedTime:F2}ms (정확도: {CalculateAccuracy():F1}%)");
+        // 점수 계산 및 표시
+        float accuracy = 0f;
+        if (useTintedPaper)
+        {
+            if (totalTargetAreaPixels > 0) accuracy = (float)correctPixelsCount / totalTargetAreaPixels * 100f;
+        }
+        else
+        {
+            int total = totalTargetAreaPixels + totalWhiteAreaPixels;
+            if (total > 0) accuracy = (float)(correctPixelsCount + totalWhiteAreaPixels) / total * 100f;
+        }
 
-        CheckSuccess();
+        UpdateAccuracyUI(accuracy);
+    }
+
+    private void UpdateAccuracyUI(float accuracy)
+    {
+        // 소수점 1자리까지 자르기
+        float truncated = Mathf.Floor(accuracy * 10f) / 10f;
+
+        if (accuracyText != null)
+        {
+            // 색상 효과: 75% 넘으면 초록색, 아니면 흰색
+            if (truncated >= 75f)
+            {
+                accuracyText.text = $"<color=green>Accuracy: {truncated}%</color>";
+                // 여기선 성공해도 멈추지 않음! (Endless)
+            }
+            else
+            {
+                accuracyText.text = $"Accuracy: {truncated}%";
+            }
+        }
     }
 
     private float ColorDifference(Color c1, Color c2)
     {
-        return Mathf.Sqrt(
-            Mathf.Pow(c1.r - c2.r, 2) +
-            Mathf.Pow(c1.g - c2.g, 2) +
-            Mathf.Pow(c1.b - c2.b, 2)
-        );
+        return Mathf.Sqrt(Mathf.Pow(c1.r - c2.r, 2) + Mathf.Pow(c1.g - c2.g, 2) + Mathf.Pow(c1.b - c2.b, 2));
     }
 
-    // 색상을 읽기 쉬운 문자열로 변환
-    private string ColorToString(Color c)
+    // 치트 기능: 현재 목표 그림을 도화지에 바로 덮어씀
+    private void AutoCompleteTarget()
     {
-        string colorName = "";
+        if (currentTarget == null) return;
 
-        // 색상 이름 추정
-        if (c.r > 0.9f && c.g < 0.2f && c.b < 0.2f) colorName = "빨강";
-        else if (c.r < 0.2f && c.g < 0.2f && c.b > 0.9f) colorName = "파랑";
-        else if (c.r > 0.9f && c.g > 0.9f && c.b < 0.2f) colorName = "노랑";
-        else if (c.r < 0.2f && c.g < 0.2f && c.b < 0.2f) colorName = "검정";
-        else if (c.r > 0.8f && c.g > 0.8f && c.b > 0.8f) colorName = "흰색";
-        else colorName = "기타";
-
-        return $"{colorName} RGB({c.r:F2},{c.g:F2},{c.b:F2})";
-    }
-
-    private float CalculateAccuracy()
-    {
-        if (useTintedPaper)
+        for (int y = 0; y < modifiableTexture.height; y++)
         {
-            // 색깔 도화지: 모든 픽셀이 목표
-            if (totalTargetAreaPixels == 0) return 0f;
-            return (float)correctPixelsCount / totalTargetAreaPixels * 100f;
-        }
-        else
-        {
-            // 흰 도화지: 흰색 영역은 보너스
-            int totalPixels = totalTargetAreaPixels + totalWhiteAreaPixels;
-            if (totalPixels == 0) return 0f;
-
-            int totalCorrect = correctPixelsCount + totalWhiteAreaPixels;
-            return (float)totalCorrect / totalPixels * 100f;
-        }
-    }
-
-    private void CheckSuccess()
-    {
-        if (isSuccessTriggered || totalTargetAreaPixels == 0) return;
-
-        float accuracyRatio = CalculateAccuracy();
-        paintingStartTrigger.ChangePercentText(accuracyRatio);
-
-        if (accuracyRatio >= successAccuracyRatio)
-        {
-            isSuccessTriggered = true;
-
-            if (happyMonkPicture != null)
+            for (int x = 0; x < modifiableTexture.width; x++)
             {
-                paperRenderer.material.mainTexture = happyMonkPicture;
+                float scale = (float)currentTarget.width / modifiableTexture.width;
+                int targetX = Mathf.Min((int)(x * scale), currentTarget.width - 1);
+                int targetY = Mathf.Min((int)(y * scale), currentTarget.height - 1);
+                modifiableTexture.SetPixel(x, y, currentTarget.GetPixel(targetX, targetY));
             }
-
-            portal.SetActive(true);
         }
+        modifiableTexture.Apply();
+        RecalculateAccuracy();
     }
 }
