@@ -2146,6 +2146,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 792207437}
     - target: {fileID: 809896639235131973, guid: ff71eedbeb4567c4eb2b3f9259bea66b, type: 3}
+      propertyPath: playerBrush
+      value: 
+      objectReference: {fileID: 1348685953}
+    - target: {fileID: 809896639235131973, guid: ff71eedbeb4567c4eb2b3f9259bea66b, type: 3}
       propertyPath: accuracyText
       value: 
       objectReference: {fileID: 18302591}
