@@ -8,7 +8,7 @@ public class TrainingEntrance : MonoBehaviour
     [Header("Training Managers (하나만 연결하세요)")]
     [SerializeField] private KeyBoardStage keyBoardStage; // 타자 훈련장일 경우 연결
     [SerializeField] private PaperPainter paperPainter;   // 그림 훈련장일 경우 연결
-    // [SerializeField] private RacingManager racingManager; // 나중에 레이싱 만들면 주석 해제
+    [SerializeField] private RunningManager runningManager;
 
     // 내부 변수
     private GameObject playerObj;
@@ -48,14 +48,12 @@ public class TrainingEntrance : MonoBehaviour
             isStarted = true;
             Debug.Log("그림 훈련 입장!");
         }
-        // 3. 나중에 레이싱 등 추가...
-        /*
-        else if (racingManager != null)
+        else if (runningManager != null)
         {
-            racingManager.StartTraining(playerObj);
+            runningManager.StartTraining(playerObj);
             isStarted = true;
+            Debug.Log("달리기 훈련 입장!");
         }
-        */
 
         // 훈련이 시작되었다면 안내 문구 끄기
         if (isStarted)
