@@ -38,7 +38,7 @@ public class KeyBoardStage : MonoBehaviour
     private bool isShiftPressed = false;
 
     // 단어 리스트
-    private List<string> targetPhrases = new List<string>() { "a", "y", "b" };
+    private List<string> targetPhrases = new List<string>() { "Paris123", "MonaLisaaa", "Louvre123" };
     private string currentTargetPhrase;
 
     void Start()
