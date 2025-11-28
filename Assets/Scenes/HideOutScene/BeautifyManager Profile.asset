@@ -150,7 +150,7 @@ MonoBehaviour:
     dimension: 1
   bloomIntensity:
     m_OverrideState: 1
-    m_Value: 0.33
+    m_Value: 0.4
   bloomThreshold:
     m_OverrideState: 1
     m_Value: 0.75
@@ -159,7 +159,7 @@ MonoBehaviour:
     m_Value: 0
   bloomSpread:
     m_OverrideState: 0
-    m_Value: 0.5
+    m_Value: 0.89
   bloomMaxBrightness:
     m_OverrideState: 0
     m_Value: 1000
@@ -250,11 +250,11 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   anamorphicFlaresIntensity:
-    m_OverrideState: 1
+    m_OverrideState: 0
     m_Value: 0.01
   anamorphicFlaresThreshold:
     m_OverrideState: 0
-    m_Value: 0.75
+    m_Value: 0
   anamorphicFlaresConservativeThreshold:
     m_OverrideState: 0
     m_Value: 0
@@ -410,8 +410,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0.01
   lensDirtIntensity:
-    m_OverrideState: 0
-    m_Value: 8.65
+    m_OverrideState: 1
+    m_Value: 0.72
   lensDirtThreshold:
     m_OverrideState: 0
     m_Value: 0.5
