@@ -1,14 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; // ★ 필수
 
 public class LaptopUIManager : MonoBehaviour
 {
-    [Header("Content Panels (내용물)")]
+    [Header("Global UI (항상 떠있는 거)")]
+    [SerializeField] private TextMeshProUGUI txtMoneyDisplay; // ★ 돈 표시 텍스트
+
+    [Header("Content Panels")]
     [SerializeField] private GameObject panelUpgrade;
     [SerializeField] private GameObject panelHideout;
     [SerializeField] private GameObject panelHeist;
 
-    [Header("Tab Buttons (선택된 탭 색깔 바꾸기용)")]
+    [Header("Tab Buttons")]
     [SerializeField] private Button btnUpgrade;
     [SerializeField] private Button btnHideout;
     [SerializeField] private Button btnHeist;
@@ -16,49 +20,47 @@ public class LaptopUIManager : MonoBehaviour
     private Color selectedColor = Color.gray;
     private Color normalColor = Color.white;
 
-    // ★ [핵심 추가] 노트북이 켜질 때마다(SetActive true 될 때마다) 실행됨
     private void OnEnable()
     {
-        CloseAllTabs(); // 켜지자마자 모든 탭을 닫아서 초기 상태로 만듦
+        CloseAllTabs();
     }
 
-    // --- 초기화 함수 ---
+    private void Update()
+    {
+        // ★ [추가] 매 프레임 돈 표시 갱신 (가장 확실한 방법)
+        if (GameManager.Instance != null && txtMoneyDisplay != null)
+        {
+            txtMoneyDisplay.text = $"보유 자산: {GameManager.Instance.data.money} $";
+        }
+    }
+
+    // ★ [핵심 기능] 뒤로가기 처리를 담당하는 함수
+    // 리턴값: true면 "내가 처리했음(노트북 끄지마)", false면 "난 할 거 없음(노트북 꺼도 됨)"
+    public bool TryGoBack()
+    {
+        // 만약 어떤 패널이라도 켜져 있다면?
+        if (panelUpgrade.activeSelf || panelHideout.activeSelf || panelHeist.activeSelf)
+        {
+            CloseAllTabs(); // 메인 화면으로 돌아감
+            return true;    // "뒤로가기 성공했으니 노트북 끄지 마"
+        }
+
+        return false; // "메인 화면이니까 이제 노트북 꺼도 됨"
+    }
+
     public void CloseAllTabs()
     {
-        // 1. 패널 다 끄기
         if (panelUpgrade != null) panelUpgrade.SetActive(false);
         if (panelHideout != null) panelHideout.SetActive(false);
         if (panelHeist != null) panelHeist.SetActive(false);
 
-        // 2. 버튼 색깔 초기화
         if (btnUpgrade != null) btnUpgrade.image.color = normalColor;
         if (btnHideout != null) btnHideout.image.color = normalColor;
         if (btnHeist != null) btnHeist.image.color = normalColor;
     }
 
-    // --- 버튼 연결 함수들 ---
-
-    public void ShowUpgradeTab()
-    {
-        CloseAllTabs();
-        if (panelUpgrade != null) panelUpgrade.SetActive(true);
-        if (btnUpgrade != null) btnUpgrade.image.color = selectedColor;
-        Debug.Log("업그레이드 탭 열림");
-    }
-
-    public void ShowHideoutTab()
-    {
-        CloseAllTabs();
-        if (panelHideout != null) panelHideout.SetActive(true);
-        if (btnHideout != null) btnHideout.image.color = selectedColor;
-        Debug.Log("은신처 탭 열림");
-    }
-
-    public void ShowHeistTab()
-    {
-        CloseAllTabs();
-        if (panelHeist != null) panelHeist.SetActive(true);
-        if (btnHeist != null) btnHeist.image.color = selectedColor;
-        Debug.Log("미술관 탭 열림");
-    }
+    // ... (버튼 연결 함수들은 기존과 동일) ...
+    public void ShowUpgradeTab() { CloseAllTabs(); panelUpgrade.SetActive(true); btnUpgrade.image.color = selectedColor; }
+    public void ShowHideoutTab() { CloseAllTabs(); panelHideout.SetActive(true); btnHideout.image.color = selectedColor; }
+    public void ShowHeistTab() { CloseAllTabs(); panelHeist.SetActive(true); btnHeist.image.color = selectedColor; }
 }

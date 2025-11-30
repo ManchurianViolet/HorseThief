@@ -42,7 +42,7 @@ public class HorseControl : MonoBehaviour
     private float basePushForce;
     private float baseHeadRotSpeed;
     private float baseMoveSpeed;
-    private float baseMaxChargeTime;
+    private float baseJumpForce; // ★ [추가] 원래 점프력 기억
 
     void Start()
     {
@@ -69,7 +69,7 @@ public class HorseControl : MonoBehaviour
         basePushForce = pushForce;
         baseHeadRotSpeed = headRotationSpeed;
         baseMoveSpeed = moveSpeed;
-        baseMaxChargeTime = maxChargeTime;
+        baseJumpForce = jumpForce; // ★ 저장
 
         // ★ [핵심] 업그레이드 적용 실행
         ApplyUpgrades();
@@ -94,10 +94,11 @@ public class HorseControl : MonoBehaviour
         // 3. 목 길이
         moveSpeed = baseMoveSpeed + (data.neckLenLv * 0.2f);
 
-        // 4. 점프 충전
-        maxChargeTime = Mathf.Max(0.1f, baseMaxChargeTime - (data.jumpLv * 0.05f));
+        // 4. ★ [수정됨] 점프력 (Lv당 50씩 증가)
+        // (기존 maxChargeTime 감소 로직은 삭제)
+        jumpForce = baseJumpForce + (data.jumpLv * 50f);
 
-        Debug.Log($"[Upgrade] 힘:{data.powerLv}, 회전:{data.neckRotLv}, 길이:{data.neckLenLv}, 점프:{data.jumpLv}");
+        Debug.Log($"[Upgrade] 힘:{pushForce}, 회전:{headRotationSpeed}, 길이:{moveSpeed}, 점프력:{jumpForce}");
     }
 
     void Update()

@@ -12,6 +12,7 @@ public class LaptopInteraction : MonoBehaviour
     [SerializeField] private HorseControl playerHorse;
 
     [SerializeField] private string playerLayerName = "HorseChest";
+    [SerializeField] private LaptopUIManager uiManager;
 
     private bool isPlayerNear = false;
     private bool isLaptopOpen = false;
@@ -36,7 +37,12 @@ public class LaptopInteraction : MonoBehaviour
         }
         else if (isLaptopOpen && Input.GetKeyDown(KeyCode.Escape))
         {
-            CloseLaptop();
+            // ★ [수정됨] 무조건 끄는 게 아니라, UI 매니저가 뒤로가기를 했는지 확인
+            // uiManager가 없거나, TryGoBack이 false(메인화면임)를 반환하면 -> 노트북 끄기
+            if (uiManager == null || !uiManager.TryGoBack())
+            {
+                CloseLaptop();
+            }
         }
     }
 
