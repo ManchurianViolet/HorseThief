@@ -3,6 +3,7 @@
 public class HorseControl : MonoBehaviour
 {
     private Rigidbody rb;
+    public bool isControlEnabled = true;
     private Transform frontShinL, frontShinR, footL, footR;
     [SerializeField] private Transform head;
     [SerializeField] private Transform scull;
@@ -81,29 +82,38 @@ public class HorseControl : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
 
-        int[] levels = GameManager.Instance.data.horseUpgradeLevels;
+        // ★ [수정됨] 데이터를 변수명으로 직접 가져옵니다.
+        PlayerData data = GameManager.Instance.data;
 
-        // 1. 마력 (Lv당 20 증가)
-        pushForce = basePushForce + (levels[0] * 20f);
+        // 1. 마력
+        pushForce = basePushForce + (data.powerLv * 20f);
 
-        // 2. 목 회전 속도 (Lv당 5 증가)
-        headRotationSpeed = baseHeadRotSpeed + (levels[1] * 5f);
+        // 2. 목 회전
+        headRotationSpeed = baseHeadRotSpeed + (data.neckRotLv * 5f);
 
-        // 3. 목 길이 조절 속도 (Lv당 0.2 증가)
-        moveSpeed = baseMoveSpeed + (levels[2] * 0.2f);
+        // 3. 목 길이
+        moveSpeed = baseMoveSpeed + (data.neckLenLv * 0.2f);
 
-        // 4. 점프 충전 시간 (Lv당 0.05초 감소, 최소 0.1초)
-        maxChargeTime = Mathf.Max(0.1f, baseMaxChargeTime - (levels[3] * 0.05f));
+        // 4. 점프 충전
+        maxChargeTime = Mathf.Max(0.1f, baseMaxChargeTime - (data.jumpLv * 0.05f));
 
-        Debug.Log($"[Horse Upgrade] 마력:{pushForce}, 목회전:{headRotationSpeed}, 목길이:{moveSpeed}, 점프충전:{maxChargeTime}");
+        Debug.Log($"[Upgrade] 힘:{data.powerLv}, 회전:{data.neckRotLv}, 길이:{data.neckLenLv}, 점프:{data.jumpLv}");
     }
 
     void Update()
     {
         CheckGrounded();
 
-        // ★ [수정] 바닥 뚫기 방지 로직 제거함 (그냥 원래대로 입력 처리만)
-        HandleInput();
+        // ★ [수정] 스위치가 켜져 있을 때만 입력 처리
+        if (isControlEnabled)
+        {
+            HandleInput();
+        }
+        else
+        {
+            // 조작 불가일 때는 물리적 회전/이동 멈춤 (미끄러짐 방지)
+            // 필요하다면 rb.velocity = Vector3.zero; 등을 추가해도 됨
+        }
     }
 
     private void HandleInput()

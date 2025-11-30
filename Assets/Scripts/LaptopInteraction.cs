@@ -1,33 +1,40 @@
 using UnityEngine;
+using Unity.Cinemachine;
 
 public class LaptopInteraction : MonoBehaviour
 {
-    [Header("UI References")]
-    [SerializeField] private GameObject laptopUIPanel;   // 노트북 화면 UI (전체 패널)
-    [SerializeField] private GameObject interactionText; // "[F] 노트북 사용" 안내 텍스트
+    [Header("UI & Camera")]
+    [SerializeField] private GameObject laptopUIPanel;   // ★ [추가됨] 노트북 화면 UI 패널
+    [SerializeField] private CinemachineCamera laptopCamera;
+    [SerializeField] private GameObject interactionText;
 
-    // 내부 변수
+    [Header("Control Target")]
+    [SerializeField] private HorseControl playerHorse;
+
+    [SerializeField] private string playerLayerName = "HorseChest";
+
     private bool isPlayerNear = false;
     private bool isLaptopOpen = false;
-    private HorseControl playerControl; // 플레이어 움직임 제어용
+    private int originalCullingMask;
 
     void Start()
     {
         // 시작 시 UI들 끄기
-        if (laptopUIPanel != null) laptopUIPanel.SetActive(false);
         if (interactionText != null) interactionText.SetActive(false);
+        if (laptopUIPanel != null) laptopUIPanel.SetActive(false); // ★ [추가됨] 시작할 때 노트북 화면 끄기
+
+        if (laptopCamera != null) laptopCamera.Priority = 0;
+
+        if (Camera.main != null) originalCullingMask = Camera.main.cullingMask;
     }
 
     void Update()
     {
-        // 1. 플레이어가 근처에 있고 + 노트북이 꺼져있을 때 + F키 누름 -> 켜기
         if (isPlayerNear && !isLaptopOpen && Input.GetKeyDown(KeyCode.F))
         {
             OpenLaptop();
         }
-
-        // 2. 노트북이 켜져있을 때 + ESC키 누름 -> 끄기
-        if (isLaptopOpen && Input.GetKeyDown(KeyCode.Escape))
+        else if (isLaptopOpen && Input.GetKeyDown(KeyCode.Escape))
         {
             CloseLaptop();
         }
@@ -37,47 +44,62 @@ public class LaptopInteraction : MonoBehaviour
     {
         isLaptopOpen = true;
 
-        // UI 켜기 / 안내 문구 끄기
-        if (laptopUIPanel != null) laptopUIPanel.SetActive(true);
         if (interactionText != null) interactionText.SetActive(false);
 
-        // 마우스 커서 보이기 & 잠금 해제 (클릭해야 하니까)
+        // ★ [추가됨] 노트북 화면 UI 켜기
+        if (laptopUIPanel != null) laptopUIPanel.SetActive(true);
+
+        if (laptopCamera != null) laptopCamera.Priority = 20;
+        if (playerHorse != null) playerHorse.isControlEnabled = false;
+
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
-        // 플레이어 움직임 멈추기 (선택사항: 뒤에서 조작 스크립트 끄기)
-        if (playerControl != null) playerControl.enabled = false;
+        // 메인 카메라에서 'HorseChest' 레이어만 쏙 빼고 렌더링하기
+        if (Camera.main != null)
+        {
+            int layerIndex = LayerMask.NameToLayer(playerLayerName);
 
-        // (선택) 물리 엔진 멈추기? -> 보통 UI 띄울 땐 Time.timeScale = 0 할 수도 있지만, 
-        // 배경이 움직이는 게 좋으면 놔둬도 됨. 여기선 플레이어 조작만 막음.
+            if (layerIndex != -1)
+            {
+                int playerLayerMask = 1 << layerIndex;
+                Camera.main.cullingMask = originalCullingMask & ~playerLayerMask;
+            }
+            else
+            {
+                Debug.LogError($"Layer '{playerLayerName}'를 찾을 수 없습니다!");
+            }
+        }
     }
 
     public void CloseLaptop()
     {
         isLaptopOpen = false;
 
-        // UI 끄기 / 안내 문구 다시 켜기 (아직 근처에 있으니까)
-        if (laptopUIPanel != null) laptopUIPanel.SetActive(false);
-        if (interactionText != null) interactionText.SetActive(true);
+        if (isPlayerNear && interactionText != null) interactionText.SetActive(true);
 
-        // 마우스 커서 숨기기 (게임 플레이 모드로 복귀)
-        // 만약 게임이 원래 마우스를 쓰는 게임이라면 이 줄은 삭제하세요.
+        // ★ [추가됨] 노트북 화면 UI 끄기
+        if (laptopUIPanel != null) laptopUIPanel.SetActive(false);
+
+        if (laptopCamera != null) laptopCamera.Priority = 0;
+        if (playerHorse != null) playerHorse.isControlEnabled = true;
+
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        // 플레이어 움직임 다시 허용
-        if (playerControl != null) playerControl.enabled = true;
+        if (Camera.main != null)
+        {
+            Camera.main.cullingMask = originalCullingMask;
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // 태그 확인 (HorseChest)
         if (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("HorseChest"))
         {
             isPlayerNear = true;
-            playerControl = other.attachedRigidbody.GetComponent<HorseControl>();
-
-            // "[F] 노트북 사용" 안내 띄우기
+            if (playerHorse == null)
+                playerHorse = other.attachedRigidbody.GetComponent<HorseControl>();
             if (interactionText != null) interactionText.SetActive(true);
         }
     }
@@ -87,12 +109,7 @@ public class LaptopInteraction : MonoBehaviour
         if (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("HorseChest"))
         {
             isPlayerNear = false;
-            playerControl = null;
-
-            // 멀어지면 강제로 노트북 닫기
             if (isLaptopOpen) CloseLaptop();
-
-            // 안내 문구 끄기
             if (interactionText != null) interactionText.SetActive(false);
         }
     }

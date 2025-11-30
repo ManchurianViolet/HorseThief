@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI; // 버튼 색깔 바꾸려면 필요
+using UnityEngine.UI;
 
 public class LaptopUIManager : MonoBehaviour
 {
@@ -13,26 +13,24 @@ public class LaptopUIManager : MonoBehaviour
     [SerializeField] private Button btnHideout;
     [SerializeField] private Button btnHeist;
 
-    // 선택되었을 때 / 안 되었을 때 색상 설정
-    private Color selectedColor = Color.gray; // 선택됨 (어둡게)
-    private Color normalColor = Color.white;  // 평상시 (원래 색)
+    private Color selectedColor = Color.gray;
+    private Color normalColor = Color.white;
 
-    void Start()
+    // ★ [핵심 추가] 노트북이 켜질 때마다(SetActive true 될 때마다) 실행됨
+    private void OnEnable()
     {
-        // ★ [수정] 시작할 때는 모든 탭을 닫아둡니다.
-        CloseAllTabs();
+        CloseAllTabs(); // 켜지자마자 모든 탭을 닫아서 초기 상태로 만듦
     }
 
     // --- 초기화 함수 ---
     public void CloseAllTabs()
     {
         // 1. 패널 다 끄기
-        panelUpgrade.SetActive(false);
-        panelHideout.SetActive(false);
-        panelHeist.SetActive(false);
+        if (panelUpgrade != null) panelUpgrade.SetActive(false);
+        if (panelHideout != null) panelHideout.SetActive(false);
+        if (panelHeist != null) panelHeist.SetActive(false);
 
-        // 2. 버튼 색깔 다 원래대로(흰색) 돌리기
-        // (버튼에 Image 컴포넌트가 있어야 작동합니다)
+        // 2. 버튼 색깔 초기화
         if (btnUpgrade != null) btnUpgrade.image.color = normalColor;
         if (btnHideout != null) btnHideout.image.color = normalColor;
         if (btnHeist != null) btnHeist.image.color = normalColor;
@@ -42,22 +40,16 @@ public class LaptopUIManager : MonoBehaviour
 
     public void ShowUpgradeTab()
     {
-        // 일단 다 끄고 시작 (초기화)
         CloseAllTabs();
-
-        // 업그레이드만 켜기
-        panelUpgrade.SetActive(true);
-
-        // 업그레이드 버튼만 색깔 바꾸기 (선택된 느낌)
+        if (panelUpgrade != null) panelUpgrade.SetActive(true);
         if (btnUpgrade != null) btnUpgrade.image.color = selectedColor;
-
         Debug.Log("업그레이드 탭 열림");
     }
 
     public void ShowHideoutTab()
     {
         CloseAllTabs();
-        panelHideout.SetActive(true);
+        if (panelHideout != null) panelHideout.SetActive(true);
         if (btnHideout != null) btnHideout.image.color = selectedColor;
         Debug.Log("은신처 탭 열림");
     }
@@ -65,7 +57,7 @@ public class LaptopUIManager : MonoBehaviour
     public void ShowHeistTab()
     {
         CloseAllTabs();
-        panelHeist.SetActive(true);
+        if (panelHeist != null) panelHeist.SetActive(true);
         if (btnHeist != null) btnHeist.image.color = selectedColor;
         Debug.Log("미술관 탭 열림");
     }

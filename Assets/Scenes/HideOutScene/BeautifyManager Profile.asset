@@ -63,7 +63,7 @@ MonoBehaviour:
     m_Value: 0
   sharpenIntensity:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 5.87
   sharpenDepthThreshold:
     m_OverrideState: 0
     m_Value: 0.035
@@ -150,7 +150,7 @@ MonoBehaviour:
     dimension: 1
   bloomIntensity:
     m_OverrideState: 1
-    m_Value: 0.4
+    m_Value: 0.25
   bloomThreshold:
     m_OverrideState: 1
     m_Value: 0.75
