@@ -1,31 +1,19 @@
 using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
 
 public class LaptopUpgradeTab : MonoBehaviour
 {
-    [Header("UI References (Text) - 레벨 표시용")]
-    [SerializeField] private TextMeshProUGUI txtPowerLv;
-    [SerializeField] private TextMeshProUGUI txtNeckRotLv;
-    [SerializeField] private TextMeshProUGUI txtNeckLenLv;
-    [SerializeField] private TextMeshProUGUI txtJumpLv;
+    [Header("Slots (순서대로: 마력, 목회전, 목길이, 점프)")]
+    [SerializeField] private LaptopUpgradeSlot slotPower;
+    [SerializeField] private LaptopUpgradeSlot slotNeckRot;
+    [SerializeField] private LaptopUpgradeSlot slotNeckLen;
+    [SerializeField] private LaptopUpgradeSlot slotJump;
 
-    [Header("UI References (Buttons) - 클릭용")]
-    [SerializeField] private Button btnPower;
-    [SerializeField] private Button btnNeckRot;
-    [SerializeField] private Button btnNeckLen;
-    [SerializeField] private Button btnJump;
-
-    // 탭이 켜질 때마다(SetActive true) 최신 정보로 갱신
     private void OnEnable()
     {
-        UpdateAllUI();
+        UpdateAllSlots(); // 켜질 때마다 최신 상태로 갱신
     }
 
-    // --- 버튼 클릭 연결 함수 ---
-    // (인스펙터의 OnClick 이벤트에 연결하세요)
-    // 0:마력, 1:목회전, 2:목길이, 3:점프충전
-
+    // === 버튼 연결용 함수 ===
     public void OnClickPower() { TryUpgrade(0); }
     public void OnClickNeckRot() { TryUpgrade(1); }
     public void OnClickNeckLen() { TryUpgrade(2); }
@@ -33,32 +21,61 @@ public class LaptopUpgradeTab : MonoBehaviour
 
     private void TryUpgrade(int typeIndex)
     {
-        // 게임 매니저에게 "돈 내고 업그레이드 해줘!" 요청
-        // 성공하면 true, 실패하면(돈 부족/만렙) false 반환
-        bool isSuccess = GameManager.Instance.TryUpgradeStat(typeIndex);
+        if (GameManager.Instance == null) return;
 
-        if (isSuccess)
+        // 1. 현재 레벨 확인
+        int currentLv = GetCurrentLevel(typeIndex);
+
+        // 2. ★ 은신처별 최대 레벨 제한 확인 (핵심 로직)
+        int hideoutLv = GameManager.Instance.data.currentHideoutLevel;
+        int maxAllowedLv = 0;
+
+        if (hideoutLv == 1) maxAllowedLv = 2;      // 은신처1 -> 2렙까지
+        else if (hideoutLv == 2) maxAllowedLv = 4; // 은신처2 -> 4렙까지
+        else maxAllowedLv = 5;                     // 은신처3 -> 5렙(만렙)
+
+        // 제한에 걸리면 업그레이드 거부
+        if (currentLv >= maxAllowedLv)
         {
-            UpdateAllUI(); // 성공했으면 화면(레벨 숫자) 갱신
-            Debug.Log("업그레이드 성공!");
+            Debug.Log($"현재 은신처(Lv.{hideoutLv})에서는 {maxAllowedLv}레벨까지만 강화 가능합니다!");
+            return;
         }
-        else
+
+        // 3. 만렙(5) 체크 (이미 5면 무시)
+        if (currentLv >= 5) return;
+
+        // 4. 게임 매니저에게 실제 업그레이드 요청 (돈 계산 등)
+        bool success = GameManager.Instance.TryUpgradeStat(typeIndex);
+
+        if (success)
         {
-            Debug.Log("업그레이드 실패 (돈 부족 or 만렙)");
+            UpdateAllSlots(); // 성공하면 색칠 다시 하기
+            Debug.Log("강화 성공!");
         }
     }
 
-    private void UpdateAllUI()
+    private void UpdateAllSlots()
     {
         if (GameManager.Instance == null) return;
-
-        // ★ [수정됨] 변수명으로 가져오기
         PlayerData data = GameManager.Instance.data;
-        int cost = GameManager.Instance.upgradeCost;
 
-        if (txtPowerLv != null) txtPowerLv.text = $" Lv.{data.powerLv} ({cost}$)";
-        if (txtNeckRotLv != null) txtNeckRotLv.text = $" Lv.{data.neckRotLv} ({cost}$)";
-        if (txtNeckLenLv != null) txtNeckLenLv.text = $" Lv.{data.neckLenLv} ({cost}$)";
-        if (txtJumpLv != null) txtJumpLv.text = $" Lv.{data.jumpLv} ({cost}$)";
+        // 각 슬롯에게 "너 지금 몇 레벨이야, 색칠해!" 명령
+        if (slotPower != null) slotPower.UpdateSlotVisual(data.powerLv);
+        if (slotNeckRot != null) slotNeckRot.UpdateSlotVisual(data.neckRotLv);
+        if (slotNeckLen != null) slotNeckLen.UpdateSlotVisual(data.neckLenLv);
+        if (slotJump != null) slotJump.UpdateSlotVisual(data.jumpLv);
+    }
+
+    // 편의용 함수: 타입 번호로 현재 레벨 가져오기
+    private int GetCurrentLevel(int typeIndex)
+    {
+        switch (typeIndex)
+        {
+            case 0: return GameManager.Instance.data.powerLv;
+            case 1: return GameManager.Instance.data.neckRotLv;
+            case 2: return GameManager.Instance.data.neckLenLv;
+            case 3: return GameManager.Instance.data.jumpLv;
+            default: return 0;
+        }
     }
 }

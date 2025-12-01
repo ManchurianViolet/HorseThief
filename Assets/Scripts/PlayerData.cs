@@ -7,15 +7,16 @@ public class PlayerData
     public bool[] unlockedHideouts = new bool[3];
     public bool[] collectedArts = new bool[30];
 
-    // ★ [수정됨] 배열을 없애고 이름을 붙였습니다!
-    public int powerLv = 1;    // 마력
-    public int neckRotLv = 1;  // 목 회전
-    public int neckLenLv = 1;  // 목 길이
-    public int jumpLv = 1;     // 점프 충전
+    // 변수 선언부 (여기도 0, 아래도 0이어야 함)
+    public int powerLv = 0;
+    public int neckRotLv = 0;
+    public int neckLenLv = 0;
+    public int jumpLv = 0;
 
     public int unlockedStageIndex = 0;
-    public int[] stolenArtsCount = new int[6];
+    // public int[] stolenArtsCount = new int[6]; // 이건 이제 안 쓰는 변수라 지워도 됩니다 (체크리스트 쓰니까)
 
+    // ★ [생성자] 게임 처음 시작할 때 딱 한 번 실행되는 곳
     public PlayerData()
     {
         money = 100;
@@ -25,21 +26,21 @@ public class PlayerData
         unlockedHideouts[1] = false;
         unlockedHideouts[2] = false;
 
-        // 초기화도 개별적으로
-        powerLv = 1;
-        neckRotLv = 1;
-        neckLenLv = 1;
-        jumpLv = 1;
+        // ★ [수정됨] 여기를 꼭 0으로 바꿔야 합니다!
+        powerLv = 0;
+        neckRotLv = 0;
+        neckLenLv = 0;
+        jumpLv = 0;
 
         unlockedStageIndex = 0;
         collectedArts = new bool[30];
     }
+
     public int GetStolenCount(int stageIndex)
     {
         int count = 0;
         int startIndex = stageIndex * 5;
 
-        // ★ 마지막 스테이지(5번)는 1개, 나머지는 5개
         int maxItems = (stageIndex == 5) ? 1 : 5;
 
         for (int i = 0; i < maxItems; i++)

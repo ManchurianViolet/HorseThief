@@ -3,15 +3,15 @@ using UnityEngine;
 public class LaptopHeistTab : MonoBehaviour
 {
     [Header("Slot References")]
-    // ÀÌÁ¦ ¹öÆ°, ÀÌ¹ÌÁö, ÅØ½ºÆ® ¹è¿­ 3°³¸¦ °ü¸®ÇÒ ÇÊ¿ä ¾øÀÌ ÀÌ°Å ÇÏ³ª¸é ³¡!
+    // ì´ì œ ë²„íŠ¼, ì´ë¯¸ì§€, í…ìŠ¤íŠ¸ ë°°ì—´ 3ê°œë¥¼ ê´€ë¦¬í•  í•„ìš” ì—†ì´ ì´ê±° í•˜ë‚˜ë©´ ë!
     [SerializeField] private HeistStageSlot[] stageSlots;
 
     private void Start()
     {
-        // ½ÃÀÛÇÒ ¶§ °¢ ½½·Ô¿¡°Ô "³Ê´Â ¸î ¹øÀÌ°í, ´©¸£¸é ¹«½¼ ÇÔ¼ö¸¦ ½ÇÇàÇØ¶ó"°í ¾Ë·ÁÁÜ
+        // ì‹œìž‘í•  ë•Œ ê° ìŠ¬ë¡¯ì—ê²Œ "ë„ˆëŠ” ëª‡ ë²ˆì´ê³ , ëˆ„ë¥´ë©´ ë¬´ìŠ¨ í•¨ìˆ˜ë¥¼ ì‹¤í–‰í•´ë¼"ê³  ì•Œë ¤ì¤Œ
         for (int i = 0; i < stageSlots.Length; i++)
         {
-            // OnClickStage ÇÔ¼ö¸¦ ³Ñ°ÜÁà¼­ ¿¬°á½ÃÅ´
+            // OnClickStage í•¨ìˆ˜ë¥¼ ë„˜ê²¨ì¤˜ì„œ ì—°ê²°ì‹œí‚´
             stageSlots[i].Initialize(i, OnClickStage);
         }
     }
@@ -21,7 +21,7 @@ public class LaptopHeistTab : MonoBehaviour
         UpdateAllSlots();
     }
 
-    // ¹öÆ°À» ´©¸£¸é ÀÌ ÇÔ¼ö°¡ ½ÇÇàµÊ (½½·ÔÀÌ ¾Ë¾Æ¼­ È£ÃâÇØÁÜ)
+    // ë²„íŠ¼ì„ ëˆ„ë¥´ë©´ ì´ í•¨ìˆ˜ê°€ ì‹¤í–‰ë¨ (ìŠ¬ë¡¯ì´ ì•Œì•„ì„œ í˜¸ì¶œí•´ì¤Œ)
     private void OnClickStage(int stageIndex)
     {
         GameManager.Instance.GenerateMission(stageIndex);
@@ -34,24 +34,24 @@ public class LaptopHeistTab : MonoBehaviour
 
         for (int i = 0; i < stageSlots.Length; i++)
         {
-            // 1. µ¥ÀÌÅÍ °è»ê
-            int maxItems = (i == 5) ? 1 : 5; // ¸¶Áö¸· ÅºÀº 1°³
+            // 1. ë°ì´í„° ê³„ì‚°
+            int maxItems = (i == 5) ? 1 : 5; // ë§ˆì§€ë§‰ íƒ„ì€ 1ê°œ
             int stolenCount = data.GetStolenCount(i);
 
             bool isComplete = (stolenCount >= maxItems);
             bool isLocked = false;
 
-            if (i > 0) // 2ÅººÎÅÍ´Â ÀÌÀü ½ºÅ×ÀÌÁö È®ÀÎ
+            if (i > 0) // 2íƒ„ë¶€í„°ëŠ” ì´ì „ ìŠ¤í…Œì´ì§€ í™•ì¸
             {
-                int prevMax = (i - 1 == 5) ? 1 : 5; // ÀÌÀü ÅºÀÌ ¸¶Áö¸· ÅºÀÏ ¼öµµ ÀÖÀ¸´Ï(±×·² ¸® ¾øÁö¸¸) ¾ÈÀüÇÏ°Ô
+                int prevMax = (i - 1 == 5) ? 1 : 5; // ì´ì „ íƒ„ì´ ë§ˆì§€ë§‰ íƒ„ì¼ ìˆ˜ë„ ìžˆìœ¼ë‹ˆ(ê·¸ëŸ´ ë¦¬ ì—†ì§€ë§Œ) ì•ˆì „í•˜ê²Œ
                 int prevCount = data.GetStolenCount(i - 1);
-                // ÀÌÀü ÅºÀ» ´Ù ²£¾î¾ß ÇØ±Ý (5°³)
-                // (ÁÖÀÇ: ±âÈ¹»ó ÀÌÀü ÅºÀº ¹«Á¶°Ç 5°³ Â¥¸®ÀÓ)
+                // ì´ì „ íƒ„ì„ ë‹¤ ê¹¼ì–´ì•¼ í•´ê¸ˆ (5ê°œ)
+                // (ì£¼ì˜: ê¸°íšìƒ ì´ì „ íƒ„ì€ ë¬´ì¡°ê±´ 5ê°œ ì§œë¦¬ìž„)
                 isLocked = (prevCount < 5);
             }
 
-            // 2. ½½·Ô¿¡°Ô "³Ê »óÅÂ ¾÷µ¥ÀÌÆ®ÇØ!" ¸í·É (Ä¸½¶È­)
-            // ¸Å´ÏÀú´Â UI°¡ ¾î¶»°Ô »ý°å´ÂÁö ¸ô¶óµµ µÊ. ±×³É »óÅÂ¸¸ ´øÁ®ÁÖ¸é ³¡.
+            // 2. ìŠ¬ë¡¯ì—ê²Œ "ë„ˆ ìƒíƒœ ì—…ë°ì´íŠ¸í•´!" ëª…ë ¹ (ìº¡ìŠí™”)
+            // ë§¤ë‹ˆì €ëŠ” UIê°€ ì–´ë–»ê²Œ ìƒê²¼ëŠ”ì§€ ëª°ë¼ë„ ë¨. ê·¸ëƒ¥ ìƒíƒœë§Œ ë˜ì ¸ì£¼ë©´ ë.
             if (i < stageSlots.Length)
             {
                 stageSlots[i].UpdateState(isLocked, isComplete, stolenCount, maxItems);

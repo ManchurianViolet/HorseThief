@@ -4,7 +4,7 @@ using TMPro;
 
 public class HeistStageSlot : MonoBehaviour
 {
-    [Header("³»ºÎ UI ÄÄÆ÷³ÍÆ® ¿¬°á")]
+    [Header("ë‚´ë¶€ UI ì»´í¬ë„ŒíŠ¸ ì—°ê²°")]
     [SerializeField] private Button myButton;
     [SerializeField] private GameObject lockIcon;
     [SerializeField] private GameObject completeStamp;
@@ -12,40 +12,40 @@ public class HeistStageSlot : MonoBehaviour
 
     private int myStageIndex;
 
-    // ÃÊ±âÈ­: ¹öÆ°¿¡ Å¬¸¯ ±â´ÉÀ» ½É¾îÁÖ´Â ÇÔ¼ö
+    // ì´ˆê¸°í™”: ë²„íŠ¼ì— í´ë¦­ ê¸°ëŠ¥ì„ ì‹¬ì–´ì£¼ëŠ” í•¨ìˆ˜
     public void Initialize(int stageIndex, System.Action<int> onClickAction)
     {
         myStageIndex = stageIndex;
-        // ¶÷´Ù½ÄÀ¸·Î Å¬¸¯ ÀÌº¥Æ® ¿¬°á
+        // ëŒë‹¤ì‹ìœ¼ë¡œ í´ë¦­ ì´ë²¤íŠ¸ ì—°ê²°
         myButton.onClick.RemoveAllListeners();
         myButton.onClick.AddListener(() => onClickAction(myStageIndex));
     }
 
-    // »óÅÂ ¾÷µ¥ÀÌÆ®: ¿ÜºÎ¿¡¼­ "³Ê Àá°å¾î", "³Ê ²£¾î" ¶ó°í ¾Ë·ÁÁÖ¸é ¾Ë¾Æ¼­ UI¸¦ ¹Ù²Ş
+    // ìƒíƒœ ì—…ë°ì´íŠ¸: ì™¸ë¶€ì—ì„œ "ë„ˆ ì ê²¼ì–´", "ë„ˆ ê¹¼ì–´" ë¼ê³  ì•Œë ¤ì£¼ë©´ ì•Œì•„ì„œ UIë¥¼ ë°”ê¿ˆ
     public void UpdateState(bool isLocked, bool isComplete, int currentCount, int maxCount)
     {
-        // 1. ÅØ½ºÆ® °»½Å
+        // 1. í…ìŠ¤íŠ¸ ê°±ì‹ 
         if (progressText != null)
             progressText.text = $"{currentCount}/{maxCount}";
 
-        // 2. »óÅÂ¿¡ µû¸¥ ºñÁÖ¾ó º¯°æ
+        // 2. ìƒíƒœì— ë”°ë¥¸ ë¹„ì£¼ì–¼ ë³€ê²½
         if (isComplete)
         {
-            // [¿Ï·á]
+            // [ì™„ë£Œ]
             myButton.interactable = false;
             lockIcon.SetActive(false);
             completeStamp.SetActive(true);
         }
         else if (isLocked)
         {
-            // [Àá±è]
+            // [ì ê¹€]
             myButton.interactable = false;
             lockIcon.SetActive(true);
             completeStamp.SetActive(false);
         }
         else
         {
-            // [ÇØ±İ - µµÀü °¡´É]
+            // [í•´ê¸ˆ - ë„ì „ ê°€ëŠ¥]
             myButton.interactable = true;
             lockIcon.SetActive(false);
             completeStamp.SetActive(false);

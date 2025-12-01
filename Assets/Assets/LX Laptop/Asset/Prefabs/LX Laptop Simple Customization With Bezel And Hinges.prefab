@@ -1451,7 +1451,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2754243631011337804
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3564,13 +3564,14 @@ GameObject:
   - component: {fileID: 6286410428478302466}
   - component: {fileID: 4872973002584231}
   - component: {fileID: 5319318815167229638}
+  - component: {fileID: 1615182248330330978}
   m_Layer: 5
   m_Name: Panel_Heist
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &6286410428478302466
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3587,8 +3588,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 543, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -4.5000305, y: 8.300003}
+  m_SizeDelta: {x: 1419.2, y: 674.80005}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4872973002584231
 CanvasRenderer:
@@ -3611,7 +3612,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.392}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3628,6 +3629,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1615182248330330978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7968945960401803035}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b98ccb5062b53534a945125bc6f4b605, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stageSlots: []
 --- !u!1 &8030572160593653111
 GameObject:
   m_ObjectHideFlags: 0
