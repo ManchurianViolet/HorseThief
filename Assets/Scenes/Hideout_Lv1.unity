@@ -2387,6 +2387,7 @@ MonoBehaviour:
     money: 100
     currentHideoutLevel: 1
     unlockedHideouts: 010000
+    collectedArts: 000000000000000000000000000000000000000000000000000000000000
     powerLv: 1
     neckRotLv: 1
     neckLenLv: 1
@@ -2394,6 +2395,39 @@ MonoBehaviour:
     unlockedStageIndex: 0
     stolenArtsCount: 000000000000000000000000000000000000000000000000
   upgradeCost: 1
+  allArtPieces:
+  - {fileID: 11400000, guid: 549ddd76a94bb7e47b91374391b23240, type: 2}
+  - {fileID: 11400000, guid: de44ac63c7092b944852d9825d340ca4, type: 2}
+  - {fileID: 11400000, guid: f7019a4f04244bf4a8edb455e0b7769d, type: 2}
+  - {fileID: 11400000, guid: 747c96a3222d29949ad497736f5ea5b8, type: 2}
+  - {fileID: 11400000, guid: a3cf334d2e4bf3a4db6a0fd6b7e9ee03, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  currentMissionTarget: {fileID: 0}
+  currentTargetIndex: 0
 --- !u!4 &97564966
 Transform:
   m_ObjectHideFlags: 0
@@ -19997,6 +20031,10 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 1235868055}
+    - target: {fileID: 2772643971180390498, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3290396727105463545, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: playerHorse
       value: 
@@ -20005,6 +20043,22 @@ PrefabInstance:
       propertyPath: interactionText
       value: 
       objectReference: {fileID: 875447260}
+    - target: {fileID: 5319318815167229638, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5319318815167229638, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5319318815167229638, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5319318815167229638, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6268989680960269990, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_LocalPosition.x
       value: 23.49
@@ -20045,6 +20099,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6286410428478302466, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1419.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6286410428478302466, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 674.80005
+      objectReference: {fileID: 0}
+    - target: {fileID: 6286410428478302466, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -4.5000305
+      objectReference: {fileID: 0}
+    - target: {fileID: 6286410428478302466, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 8.300003
+      objectReference: {fileID: 0}
+    - target: {fileID: 7968945960401803035, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8672763666794448961, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_Name
       value: UpgradeLaptop
@@ -20052,8 +20126,29 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7968945960401803035, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 855346707}
   m_SourcePrefab: {fileID: 100100000, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+--- !u!1 &855346706 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7968945960401803035, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+  m_PrefabInstance: {fileID: 855346705}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &855346707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 855346706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b98ccb5062b53534a945125bc6f4b605, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stageSlots: []
 --- !u!1001 &856196964
 PrefabInstance:
   m_ObjectHideFlags: 0

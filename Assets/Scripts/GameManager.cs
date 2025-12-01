@@ -1,13 +1,20 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
     public PlayerData data;
     public int upgradeCost = 1;
+    [Header("=== Heist System ===")]
+    // ★ 전체 미술품 30개 (인스펙터에서 순서대로 등록 필수!)
+    public ArtPieceData[] allArtPieces = new ArtPieceData[30];
 
+    // ★ 이번 판의 타겟 (로딩씬 & 미술관씬에서 이걸 갖다 씀)
+    public ArtPieceData currentMissionTarget;
+    public int currentTargetIndex; // 타겟 번호 (0~29) - 나중에 저장할 때 씀
     private void Awake()
     {
         if (Instance == null)
@@ -112,7 +119,44 @@ public class GameManager : MonoBehaviour
             data = new PlayerData();
         }
     }
+    public void GenerateMission(int stageIndex) // stageIndex: 0 ~ 5
+    {
+        // 1. 이 스테이지의 보물 구간 (예: 2탄이면 5~9번)
+        int startIndex = stageIndex * 5;
+        int maxItems = (stageIndex == 5) ? 1 : 5;
+        // 2. 안 훔친 것들만 골라내기 (후보 리스트 작성)
+        List<int> candidates = new List<int>();
 
+        for (int i = 0; i < maxItems; i++)
+        {
+            int artIndex = startIndex + i;
+            // "아직 안 훔쳤니(false)? 그럼 넌 후보다!"
+            if (data.collectedArts[artIndex] == false)
+            {
+                candidates.Add(artIndex);
+            }
+        }
+
+        // 3. 예외 처리 (이미 다 털었음)
+        if (candidates.Count == 0)
+        {
+            Debug.Log("이 미술관은 이미 정복했습니다!");
+            return;
+        }
+
+        // 4. 후보 중 하나를 랜덤으로 뽑기!
+        int randomPick = Random.Range(0, candidates.Count);
+        int finalTargetIndex = candidates[randomPick];
+
+        // 5. 타겟 확정 및 저장
+        currentTargetIndex = finalTargetIndex;
+        currentMissionTarget = allArtPieces[finalTargetIndex];
+
+        Debug.Log($"미션 확정! 목표: {currentMissionTarget.artName} (번호: {currentTargetIndex})");
+
+        // 6. 로딩 씬으로 출발!
+        SceneManager.LoadScene("LoadingScene");
+    }
     [ContextMenu("Reset Data")]
     public void ResetData()
     {
