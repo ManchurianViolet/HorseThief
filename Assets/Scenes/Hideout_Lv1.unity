@@ -2839,12 +2839,11 @@ MonoBehaviour:
     currentHideoutLevel: 1
     unlockedHideouts: 010000
     collectedArts: 000000000000000000000000000000000000000000000000000000000000
-    powerLv: 1
-    neckRotLv: 1
-    neckLenLv: 1
-    jumpLv: 1
+    powerLv: 0
+    neckRotLv: 0
+    neckLenLv: 0
+    jumpLv: 0
     unlockedStageIndex: 0
-    stolenArtsCount: 000000000000000000000000000000000000000000000000
   upgradeCost: 1
   allArtPieces:
   - {fileID: 11400000, guid: 549ddd76a94bb7e47b91374391b23240, type: 2}
@@ -22134,6 +22133,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 65128875062591189, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.b
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 65128875062591189, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 65128875062591189, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
+      propertyPath: m_Color.r
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 848139112751488459, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: slotJump
       value: 
@@ -22180,7 +22191,7 @@ PrefabInstance:
       objectReference: {fileID: 233940210}
     - target: {fileID: 2433563151556550402, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2519269331414499005, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_Name
@@ -22192,7 +22203,7 @@ PrefabInstance:
       objectReference: {fileID: 1235868055}
     - target: {fileID: 2772643971180390498, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2987047108341011632, guid: d29c469ff8412394e8c52dba803fef43, type: 3}
       propertyPath: m_sharedMaterial
@@ -25716,7 +25727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.2, g: 1, b: 0.2, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -35603,7 +35614,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.2, g: 1, b: 0.2, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -49820,7 +49831,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.2, g: 1, b: 0.2, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
