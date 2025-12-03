@@ -8,10 +8,12 @@ public class LaptopHideoutTab : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private Image hideoutImageDisplay; // 은신처 사진
     [SerializeField] private TextMeshProUGUI txtName;   // 은신처 이름
-    [SerializeField] private TextMeshProUGUI txtEffect; // 효과 설명
 
-    // [수정됨] 버튼 안의 텍스트 변수 삭제함
+    [SerializeField] private TextMeshProUGUI txtDesc;   // ★ [수정됨] 설명글 (수동 입력 내용 표시)
+    [SerializeField] private TextMeshProUGUI txtPrice;  // ★ [수정됨] 가격 표시용 별도 텍스트
+
     [SerializeField] private Button btnAction;          // 메인 버튼 (이미지)
+    [SerializeField] private TextMeshProUGUI txtBtnAction; // 버튼 안의 글씨 ("구매하기" / "이동" 등)
 
     [SerializeField] private Button btnPrev; // 왼쪽 화살표
     [SerializeField] private Button btnNext; // 오른쪽 화살표
@@ -22,7 +24,9 @@ public class LaptopHideoutTab : MonoBehaviour
     {
         public string hideoutName;
         public Sprite hideoutSprite;
+        [TextArea] public string description; // ★ [추가됨] 설명글 입력칸 (여러 줄 가능)
         public int price;
+        // maxUpgradeLevel은 이제 UI 표시에 안 쓰지만, 로직용으로 남겨둬도 됨
         public int maxUpgradeLevel;
     }
 
@@ -84,35 +88,42 @@ public class LaptopHideoutTab : MonoBehaviour
 
         HideoutInfo info = hideoutList[currentIndex];
 
-        // 1. 정보 표시
+        // 1. 정보 표시 (설명글 그대로 보여주기)
         if (hideoutImageDisplay != null) hideoutImageDisplay.sprite = info.hideoutSprite;
-        txtName.text = info.hideoutName;
-        txtEffect.text = $"말 스텟 강화 최대치 {info.maxUpgradeLevel}";
+        if (txtName != null) txtName.text = info.hideoutName;
+        if (txtDesc != null) txtDesc.text = info.description; // ★ 수동 입력한 설명 표시
 
         // 2. 화살표 활성/비활성
         btnPrev.interactable = (currentIndex > 0);
         btnNext.interactable = (currentIndex < hideoutList.Length - 1);
 
-        // 3. 버튼 상태 (색깔로 구분)
+        // 3. 버튼 및 가격 표시
         int targetLevel = currentIndex + 1;
         bool isUnlocked = GameManager.Instance.data.unlockedHideouts[currentIndex];
         bool isCurrent = (GameManager.Instance.data.currentHideoutLevel == targetLevel);
 
+        // ★ [수정됨] 우선순위 1등: 현재 살고 있는 집인가?
         if (isCurrent)
         {
-            // 현재 살고 있는 집 -> 회색 (클릭 불가)
+            if (txtBtnAction != null) txtBtnAction.text = "현재 위치";
+            if (txtPrice != null) txtPrice.text = ""; // 가격 대신 보유함 표시
             btnAction.image.color = Color.gray;
             btnAction.interactable = false;
         }
+        // ★ [수정됨] 우선순위 2등: 샀지만 지금 안 사는 집인가?
         else if (isUnlocked)
         {
-            // 이미 산 집 -> 흰색 (클릭 불가 - 이사 기능 뺐으므로)
+            if (txtBtnAction != null) txtBtnAction.text = "보유함";
+            if (txtPrice != null) txtPrice.text = "-"; // 이미 샀으니 가격 표시 X
             btnAction.image.color = Color.white;
             btnAction.interactable = false;
         }
+        // ★ 우선순위 3등: 아직 안 산 집인가?
         else
         {
-            // 아직 안 산 집 -> 돈 있으면 노랑, 없으면 빨강
+            if (txtBtnAction != null) txtBtnAction.text = "구매하기";
+            if (txtPrice != null) txtPrice.text = $"{info.price} $"; // 가격 표시
+
             if (GameManager.Instance.data.money >= info.price)
             {
                 btnAction.image.color = Color.yellow;

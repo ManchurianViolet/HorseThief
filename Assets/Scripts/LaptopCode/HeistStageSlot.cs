@@ -9,7 +9,8 @@ public class HeistStageSlot : MonoBehaviour
     [SerializeField] private GameObject lockIcon;
     [SerializeField] private GameObject completeStamp;
     [SerializeField] private TextMeshProUGUI progressText;
-
+    [SerializeField] private Image thumbnailImage; // 미술관 사진
+    [SerializeField] private TextMeshProUGUI nameText; // 미술관 이름
     private int myStageIndex;
 
     // 초기화: 버튼에 클릭 기능을 심어주는 함수
@@ -20,7 +21,11 @@ public class HeistStageSlot : MonoBehaviour
         myButton.onClick.RemoveAllListeners();
         myButton.onClick.AddListener(() => onClickAction(myStageIndex));
     }
-
+    public void SetInfo(string name, Sprite sprite)
+    {
+        if (nameText != null) nameText.text = name;
+        if (thumbnailImage != null) thumbnailImage.sprite = sprite;
+    }
     // 상태 업데이트: 외부에서 "너 잠겼어", "너 깼어" 라고 알려주면 알아서 UI를 바꿈
     public void UpdateState(bool isLocked, bool isComplete, int currentCount, int maxCount)
     {

@@ -1,61 +1,208 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class LaptopHeistTab : MonoBehaviour
 {
-    [Header("Slot References")]
-    // 이제 버튼, 이미지, 텍스트 배열 3개를 관리할 필요 없이 이거 하나면 끝!
-    [SerializeField] private HeistStageSlot[] stageSlots;
-
-    private void Start()
+    // ====================================================
+    // 1. 데이터 정의 (인스펙터에서 설정)
+    // ====================================================
+    [System.Serializable]
+    public class StageInfo
     {
-        // 시작할 때 각 슬롯에게 "너는 몇 번이고, 누르면 무슨 함수를 실행해라"고 알려줌
-        for (int i = 0; i < stageSlots.Length; i++)
-        {
-            // OnClickStage 함수를 넘겨줘서 연결시킴
-            stageSlots[i].Initialize(i, OnClickStage);
-        }
+        public string stageName;        // 미술관 이름
+        public Sprite stageThumbnail;   // 사진
+        [TextArea] public string description; // 설명 (팝업용)
+        public int expectedProfit;      // 예상 수익 (팝업용)
+        public List<ArtPieceData> artPool; // 훔칠 후보들
     }
+
+    [Header("Stage Data")]
+    public StageInfo[] stageList; // 6개 데이터 입력
+
+    // ====================================================
+    // 2. UI 연결 (슬롯 & 화살표)
+    // ====================================================
+    [Header("Carousel UI")]
+    [SerializeField] private HeistStageSlot slotLeft;   // 왼쪽 슬롯 (들러리)
+    [SerializeField] private HeistStageSlot slotCenter; // 가운데 슬롯 (주인공)
+    [SerializeField] private HeistStageSlot slotRight;  // 오른쪽 슬롯 (들러리)
+
+    [SerializeField] private Button btnPrev; // < 버튼
+    [SerializeField] private Button btnNext; // > 버튼
+
+    // ====================================================
+    // 3. UI 연결 (팝업창)
+    // ====================================================
+    [Header("Popup UI")]
+    [SerializeField] private GameObject popupPanel;      // 팝업 전체
+    [SerializeField] private Image popupImage;           // 팝업 사진
+    [SerializeField] private TextMeshProUGUI popupName;  // 팝업 이름
+    [SerializeField] private TextMeshProUGUI popupDesc;  // 팝업 설명 ("설명 + 수익")
+    [SerializeField] private Button btnPopupAction;      // "잠입" 버튼
+    [SerializeField] private TextMeshProUGUI txtPopupAction; // 버튼 글씨
+
+    // ====================================================
+    // 내부 변수
+    // ====================================================
+    private int currentIndex = 0; // 현재 가운데에 떠있는 스테이지 번호 (0~5)
 
     private void OnEnable()
     {
-        UpdateAllSlots();
+        // 켜질 때, 내가 갈 수 있는 가장 높은 스테이지를 기본으로 보여줌
+        if (GameManager.Instance != null)
+        {
+            currentIndex = Mathf.Clamp(GameManager.Instance.data.unlockedStageIndex, 0, stageList.Length - 1);
+        }
+        popupPanel.SetActive(false); // 팝업은 끄고 시작
+        UpdateCarousel();
     }
 
-    // 버튼을 누르면 이 함수가 실행됨 (슬롯이 알아서 호출해줌)
-    private void OnClickStage(int stageIndex)
+    // ====================================================
+    // 화살표 버튼 기능
+    // ====================================================
+    public void OnClickPrev()
     {
-        GameManager.Instance.GenerateMission(stageIndex);
+        if (currentIndex > 0)
+        {
+            currentIndex--;
+            UpdateCarousel();
+        }
     }
 
-    private void UpdateAllSlots()
+    public void OnClickNext()
     {
-        if (GameManager.Instance == null) return;
+        if (currentIndex < stageList.Length - 1)
+        {
+            currentIndex++;
+            UpdateCarousel();
+        }
+    }
+
+    // ====================================================
+    // 가운데 슬롯 클릭 -> 팝업 열기
+    // ====================================================
+    // HeistStageSlot 스크립트에서 이 함수를 호출하게 연결할 겁니다.
+    public void OnClickCenterSlot(int stageIndex)
+    {
+        // 인자로 받은 index가 현재 보고 있는 index와 같은지 확인 (안전장치)
+        if (stageIndex != currentIndex) return;
+
+        OpenPopup(stageIndex);
+    }
+
+    // ====================================================
+    // 팝업 내부 기능 (잠입 버튼 / 닫기 버튼)
+    // ====================================================
+    public void OnClickPopupAction() // "잠입" 버튼
+    {
+        // 미션 생성 및 로딩 씬 이동
+        GameManager.Instance.GenerateMission(currentIndex);
+    }
+
+    public void OnClickPopupClose() // "X" 버튼
+    {
+        popupPanel.SetActive(false);
+    }
+
+    private void OpenPopup(int index)
+    {
+        StageInfo info = stageList[index];
         PlayerData data = GameManager.Instance.data;
 
-        for (int i = 0; i < stageSlots.Length; i++)
+        // 1. 정보 채우기
+        popupImage.sprite = info.stageThumbnail;
+        popupName.text = info.stageName;
+        popupDesc.text = $"{info.description}\n\n예상 수익: ${info.expectedProfit}";
+
+        // 2. 버튼 상태 결정 (잠김/완료/가능)
+        // (여기서 로직: 소거법 데이터 체크)
+        int maxItems = (index == 5) ? 1 : 5;
+        int stolenCount = data.GetStolenCount(index);
+        bool isComplete = (stolenCount >= maxItems);
+
+        // 잠김 체크 (1탄은 무조건 열림, 그 외는 이전 탄 완료 여부)
+        bool isLocked = false;
+        if (index > 0)
         {
-            // 1. 데이터 계산
-            int maxItems = (i == 5) ? 1 : 5; // 마지막 탄은 1개
-            int stolenCount = data.GetStolenCount(i);
-
-            bool isComplete = (stolenCount >= maxItems);
-            bool isLocked = false;
-
-            if (i > 0) // 2탄부터는 이전 스테이지 확인
-            {
-                int prevMax = (i - 1 == 5) ? 1 : 5; // 이전 탄이 마지막 탄일 수도 있으니(그럴 리 없지만) 안전하게
-                int prevCount = data.GetStolenCount(i - 1);
-                // 이전 탄을 다 깼어야 해금 (5개)
-                // (주의: 기획상 이전 탄은 무조건 5개 짜리임)
-                isLocked = (prevCount < 5);
-            }
-
-            // 2. 슬롯에게 "너 상태 업데이트해!" 명령 (캡슐화)
-            // 매니저는 UI가 어떻게 생겼는지 몰라도 됨. 그냥 상태만 던져주면 끝.
-            if (i < stageSlots.Length)
-            {
-                stageSlots[i].UpdateState(isLocked, isComplete, stolenCount, maxItems);
-            }
+            int prevMax = (index - 1 == 5) ? 1 : 5;
+            if (data.GetStolenCount(index - 1) < prevMax) isLocked = true;
         }
+
+        if (isComplete)
+        {
+            txtPopupAction.text = "정복 완료";
+            btnPopupAction.interactable = false;
+            btnPopupAction.image.color = Color.gray;
+        }
+        else if (isLocked)
+        {
+            txtPopupAction.text = "잠금됨 (이전 단계 필요)";
+            btnPopupAction.interactable = false;
+            btnPopupAction.image.color = Color.red;
+        }
+        else
+        {
+            txtPopupAction.text = "잠입 시작";
+            btnPopupAction.interactable = true;
+            btnPopupAction.image.color = Color.green;
+        }
+
+        popupPanel.SetActive(true);
+    }
+
+    // ====================================================
+    // 화면 갱신 (슬라이드 처리)
+    // ====================================================
+    private void UpdateCarousel()
+    {
+        // 1. 화살표 상태
+        btnPrev.gameObject.SetActive(currentIndex > 0);
+        btnNext.gameObject.SetActive(currentIndex < stageList.Length - 1);
+
+        // 2. 슬롯 데이터 업데이트 함수 (내부용)
+        // index가 범위를 벗어나면(-1이거나 6이거나) 슬롯을 끕니다.
+        UpdateSingleSlot(slotLeft, currentIndex - 1);
+        UpdateSingleSlot(slotCenter, currentIndex);
+        UpdateSingleSlot(slotRight, currentIndex + 1);
+    }
+
+    private void UpdateSingleSlot(HeistStageSlot slot, int dataIndex)
+    {
+        if (slot == null) return;
+
+        // 데이터 범위 밖이면 슬롯 숨기기
+        if (dataIndex < 0 || dataIndex >= stageList.Length)
+        {
+            slot.gameObject.SetActive(false);
+            return;
+        }
+
+        slot.gameObject.SetActive(true);
+
+        // 데이터 가져오기
+        PlayerData data = GameManager.Instance.data;
+        int maxItems = (dataIndex == 5) ? 1 : 5;
+        int stolenCount = data.GetStolenCount(dataIndex);
+
+        bool isComplete = (stolenCount >= maxItems);
+        bool isLocked = false;
+        if (dataIndex > 0)
+        {
+            int prevMax = (dataIndex - 1 == 5) ? 1 : 5;
+            if (data.GetStolenCount(dataIndex - 1) < prevMax) isLocked = true;
+        }
+
+        // 슬롯에게 정보 전달 (이미지, 상태 등)
+        // *주의: 슬롯 스크립트도 약간 수정이 필요할 수 있습니다 (썸네일 변경 기능 추가 등)
+        // 여기서는 기존 Initialize/UpdateState를 활용합니다.
+
+        slot.Initialize(dataIndex, OnClickCenterSlot); // 클릭 시 내 함수 호출해달라고 연결
+        slot.UpdateState(isLocked, isComplete, stolenCount, maxItems);
+
+        // (추가) 썸네일이나 이름 바꾸는 기능이 슬롯에 있다면 여기서 호출
+         slot.SetInfo(stageList[dataIndex].stageName, stageList[dataIndex].stageThumbnail);
     }
 }
