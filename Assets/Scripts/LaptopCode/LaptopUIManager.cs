@@ -17,8 +17,7 @@ public class LaptopUIManager : MonoBehaviour
     [SerializeField] private Button btnHideout;
     [SerializeField] private Button btnHeist;
 
-    private Color selectedColor = Color.gray;
-    private Color normalColor = Color.white;
+
 
     private void OnEnable()
     {
@@ -55,19 +54,17 @@ public class LaptopUIManager : MonoBehaviour
         if (panelHeist != null) panelHeist.SetActive(false);
         // ★ [추가] 돈 표시 UI를 비활성화합니다.
         if (txtMoneyDisplay != null) txtMoneyDisplay.gameObject.SetActive(false);
-        if (btnUpgrade != null) btnUpgrade.image.color = normalColor;
-        if (btnHideout != null) btnHideout.image.color = normalColor;
-        if (btnHeist != null) btnHeist.image.color = normalColor;
+
     }
 
     // ... (버튼 연결 함수들은 기존과 동일) ...
-    public void ShowUpgradeTab() { CloseAllTabs(); panelUpgrade.SetActive(true); btnUpgrade.image.color = selectedColor; // ★ [추가] 돈 표시 UI를 활성화합니다.
+    public void ShowUpgradeTab() { CloseAllTabs(); panelUpgrade.SetActive(true);  // ★ [추가] 돈 표시 UI를 활성화합니다.
         if (txtMoneyDisplay != null) txtMoneyDisplay.gameObject.SetActive(true);
     }
-    public void ShowHideoutTab() { CloseAllTabs(); panelHideout.SetActive(true); btnHideout.image.color = selectedColor;// ★ [추가] 돈 표시 UI를 활성화합니다.
+    public void ShowHideoutTab() { CloseAllTabs(); panelHideout.SetActive(true); // ★ [추가] 돈 표시 UI를 활성화합니다.
         if (txtMoneyDisplay != null) txtMoneyDisplay.gameObject.SetActive(true);
     }
-    public void ShowHeistTab() { CloseAllTabs(); panelHeist.SetActive(true); btnHeist.image.color = selectedColor; // ★ [추가] 돈 표시 UI를 활성화합니다.
+    public void ShowHeistTab() { CloseAllTabs(); panelHeist.SetActive(true);  // ★ [추가] 돈 표시 UI를 활성화합니다.
         if (txtMoneyDisplay != null) txtMoneyDisplay.gameObject.SetActive(true);
     }
 }
