@@ -14,6 +14,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Hideout_Lv3.unity
     guid: 03920a3e825bd044d935eef451fdb104
+  - enabled: 1
+    path: Assets/Scenes/LoadingScene.unity
+    guid: bf90ec9b1a4ac894cb1c123839990535
+  - enabled: 1
+    path: Assets/Scenes/Museum_Stage1.unity
+    guid: f030a24dd4bf96049ae95df552982515
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
