@@ -15,4 +15,4 @@ MonoBehaviour:
   artName: Art2
   price: 55
   uiSprite: {fileID: 0}
-  targetTexture: {fileID: 2800000, guid: 9e2fb59d6b468604784111ea286504f3, type: 3}
+  targetTexture: {fileID: 2800000, guid: ce590efc38904494c8def1d9e5504de2, type: 3}

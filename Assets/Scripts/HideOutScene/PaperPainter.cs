@@ -16,14 +16,12 @@ public class PaperPainter : MonoBehaviour
     [SerializeField] private Texture2D[] targetGallery;
 
     [Header("=== Player Settings ===")]
-    [SerializeField] private GameObject playerBrush; // ★ [추가됨] 말 입에 있는 붓 오브젝트 연결
+    [SerializeField] private GameObject playerBrush;
 
     [Header("=== Painting Settings ===")]
     public Color paintColor = Color.blue;
     [SerializeField] private Texture2D paperTexture;
     [SerializeField] private float brushSize = 20f;
-    [SerializeField] private bool useDelayedCheck = true;
-    [SerializeField] private float checkInterval = 1.0f;
 
     [Header("=== Paper Options ===")]
     [SerializeField] private Color paperBackgroundColor = new Color(0.9f, 0.85f, 0.7f, 1f);
@@ -43,11 +41,6 @@ public class PaperPainter : MonoBehaviour
     private int totalTargetAreaPixels = 0;
     private int totalWhiteAreaPixels = 0;
 
-    private bool isPainting = false;
-    private bool needsRecalculation = false;
-    private float lastCheckTime = 0f;
-    private float paintEndTime = 0f;
-
     private void Start()
     {
         myRenderer = GetComponent<Renderer>();
@@ -62,16 +55,6 @@ public class PaperPainter : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Y)) SetNewRandomPainting();
         if (Input.GetKeyDown(KeyCode.C)) AutoCompleteTarget();
         if (Input.GetKeyDown(KeyCode.Escape)) StopTraining();
-
-        if (useDelayedCheck && needsRecalculation && !isPainting)
-        {
-            if (Time.time - paintEndTime >= 0.2f && Time.time - lastCheckTime >= checkInterval)
-            {
-                RecalculateAccuracy();
-                needsRecalculation = false;
-                lastCheckTime = Time.time;
-            }
-        }
     }
 
     public void StartTraining(GameObject player)
@@ -92,13 +75,11 @@ public class PaperPainter : MonoBehaviour
         SetNewRandomPainting();
     }
 
-    // ★ [수정됨] 훈련 종료 시 붓을 끄는 로직 추가
     public void StopTraining()
     {
         isTrainingActive = false;
         if (gameUIPanel != null) gameUIPanel.SetActive(false);
 
-        // 플레이어 내보내기
         if (currentPlayer != null && getOutPosition != null)
         {
             Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
@@ -109,7 +90,6 @@ public class PaperPainter : MonoBehaviour
             currentPlayer = null;
         }
 
-        // ★★★ [핵심] 입에 문 붓 강제로 끄기
         if (playerBrush != null)
         {
             playerBrush.SetActive(false);
@@ -137,15 +117,11 @@ public class PaperPainter : MonoBehaviour
         UpdateAccuracyUI(0f);
     }
 
-    // ... (이하 나머지 코드는 이전과 100% 동일하므로 생략하지 않고 그대로 유지) ...
-    // 편의를 위해 전체 붙여넣기 하시라고 아래에 나머지 코드도 이어드립니다.
-
     private void OnTriggerEnter(Collider _other)
     {
         if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
-            isPainting = true;
             TriggerCheck(_other.gameObject);
         }
     }
@@ -164,17 +140,7 @@ public class PaperPainter : MonoBehaviour
         if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
-            isPainting = false;
-            paintEndTime = Time.time;
-            if (!useDelayedCheck && needsRecalculation)
-            {
-                if (Time.time - lastCheckTime >= checkInterval)
-                {
-                    RecalculateAccuracy();
-                    needsRecalculation = false;
-                    lastCheckTime = Time.time;
-                }
-            }
+            // 실시간 판정이므로 Exit에서 특별히 할 일 없음
         }
     }
 
@@ -212,6 +178,8 @@ public class PaperPainter : MonoBehaviour
         int y = (int)(uv.y * modifiableTexture.height);
         int brushSizeInt = Mathf.CeilToInt(brushSize);
 
+        bool painted = false;
+
         for (int i = -brushSizeInt; i <= brushSizeInt; i++)
         {
             for (int j = -brushSizeInt; j <= brushSizeInt; j++)
@@ -234,13 +202,18 @@ public class PaperPainter : MonoBehaviour
                                 pixelChecked[paperIndex] = false;
 
                             modifiableTexture.SetPixel(pixelX, pixelY, paintColor);
-                            needsRecalculation = true;
+                            painted = true;
                         }
                     }
                 }
             }
         }
-        modifiableTexture.Apply();
+
+        if (painted)
+        {
+            modifiableTexture.Apply();
+            RecalculateAccuracy(); // ★ 실시간 판정!
+        }
     }
 
     private void CreateCleanCanvas()
@@ -271,7 +244,11 @@ public class PaperPainter : MonoBehaviour
 
     private void PrepareTargetData(Texture2D target)
     {
-        if (!target.isReadable) { Debug.LogError($"'{target.name}' 텍스처의 Read/Write Enabled를 체크해주세요!"); return; }
+        if (!target.isReadable)
+        {
+            Debug.LogError($"'{target.name}' 텍스처의 Read/Write Enabled를 체크해주세요!");
+            return;
+        }
 
         targetPixels = target.GetPixels();
         pixelChecked = new bool[modifiableTexture.width * modifiableTexture.height];
@@ -302,11 +279,16 @@ public class PaperPainter : MonoBehaviour
         if (targetPixels == null) return;
 
         correctPixelsCount = 0;
-        for (int y = 0; y < modifiableTexture.height; y++)
+
+        // ★ 성능 최적화: 샘플링 방식 (5칸씩 건너뛰며 체크)
+        int step = 5;
+        int sampledTotal = 0;
+        int sampledCorrect = 0;
+
+        for (int y = 0; y < modifiableTexture.height; y += step)
         {
-            for (int x = 0; x < modifiableTexture.width; x++)
+            for (int x = 0; x < modifiableTexture.width; x += step)
             {
-                int paperIndex = y * modifiableTexture.width + x;
                 float scale = (float)currentTarget.width / modifiableTexture.width;
                 int targetX = Mathf.Min((int)(x * scale), currentTarget.width - 1);
                 int targetY = Mathf.Min((int)(y * scale), currentTarget.height - 1);
@@ -320,15 +302,15 @@ public class PaperPainter : MonoBehaviour
 
                 if (useTintedPaper)
                 {
-                    if (colorDiff < 0.25f) { pixelChecked[paperIndex] = true; correctPixelsCount++; }
-                    else { pixelChecked[paperIndex] = false; }
+                    sampledTotal++;
+                    if (colorDiff < 0.25f) sampledCorrect++;
                 }
                 else
                 {
                     if (targetBrightness < 0.8f)
                     {
-                        if (colorDiff < 0.2f) { pixelChecked[paperIndex] = true; correctPixelsCount++; }
-                        else { pixelChecked[paperIndex] = false; }
+                        sampledTotal++;
+                        if (colorDiff < 0.2f) sampledCorrect++;
                     }
                 }
             }
@@ -337,12 +319,14 @@ public class PaperPainter : MonoBehaviour
         float accuracy = 0f;
         if (useTintedPaper)
         {
-            if (totalTargetAreaPixels > 0) accuracy = (float)correctPixelsCount / totalTargetAreaPixels * 100f;
+            if (sampledTotal > 0) accuracy = (float)sampledCorrect / sampledTotal * 100f;
         }
         else
         {
-            int total = totalTargetAreaPixels + totalWhiteAreaPixels;
-            if (total > 0) accuracy = (float)(correctPixelsCount + totalWhiteAreaPixels) / total * 100f;
+            // White area는 샘플링 비율로 추정
+            int estimatedWhite = totalWhiteAreaPixels / (step * step);
+            int estimatedTotal = sampledTotal + estimatedWhite;
+            if (estimatedTotal > 0) accuracy = (float)(sampledCorrect + estimatedWhite) / estimatedTotal * 100f;
         }
 
         UpdateAccuracyUI(accuracy);

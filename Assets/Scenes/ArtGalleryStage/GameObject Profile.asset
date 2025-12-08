@@ -134,7 +134,7 @@ MonoBehaviour:
     m_Value: 1
   brightness:
     m_OverrideState: 1
-    m_Value: 1.05
+    m_Value: 1.03
   contrast:
     m_OverrideState: 1
     m_Value: 1.02
@@ -165,7 +165,7 @@ MonoBehaviour:
     dimension: 1
   bloomIntensity:
     m_OverrideState: 1
-    m_Value: 0.25
+    m_Value: 0.1
   bloomThreshold:
     m_OverrideState: 1
     m_Value: 0.75

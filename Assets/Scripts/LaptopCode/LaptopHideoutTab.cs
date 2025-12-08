@@ -105,7 +105,7 @@ public class LaptopHideoutTab : MonoBehaviour
         // ★ [수정됨] 우선순위 1등: 현재 살고 있는 집인가?
         if (isCurrent)
         {
-            if (txtBtnAction != null) txtBtnAction.text = "현재 위치";
+            if (txtBtnAction != null) txtBtnAction.text = "Current Location";
             if (txtPrice != null) txtPrice.text = ""; // 가격 대신 보유함 표시
             btnAction.image.color = Color.gray;
             btnAction.interactable = false;
@@ -113,7 +113,7 @@ public class LaptopHideoutTab : MonoBehaviour
         // ★ [수정됨] 우선순위 2등: 샀지만 지금 안 사는 집인가?
         else if (isUnlocked)
         {
-            if (txtBtnAction != null) txtBtnAction.text = "보유함";
+            if (txtBtnAction != null) txtBtnAction.text = "Occupied";
             if (txtPrice != null) txtPrice.text = "-"; // 이미 샀으니 가격 표시 X
             btnAction.image.color = Color.white;
             btnAction.interactable = false;
@@ -121,7 +121,7 @@ public class LaptopHideoutTab : MonoBehaviour
         // ★ 우선순위 3등: 아직 안 산 집인가?
         else
         {
-            if (txtBtnAction != null) txtBtnAction.text = "구매하기";
+            if (txtBtnAction != null) txtBtnAction.text = "Buy";
             if (txtPrice != null) txtPrice.text = $"{info.price} $"; // 가격 표시
 
             if (GameManager.Instance.data.money >= info.price)
