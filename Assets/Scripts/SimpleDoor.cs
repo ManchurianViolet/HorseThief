@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class SimpleDoor : MonoBehaviour
 {
-    [SerializeField] private Vector3 openPositionOffset = new Vector3(0, 3, 0); // À§·Î 3¹ÌÅÍ ¿­¸²
+    [SerializeField] private Vector3 openPositionOffset = new Vector3(0, 3, 0); // ìœ„ë¡œ 3ë¯¸í„° ì—´ë¦¼
     [SerializeField] private float speed = 2.0f;
 
     private bool isOpen = false;
@@ -10,20 +10,20 @@ public class SimpleDoor : MonoBehaviour
 
     void Start()
     {
-        targetPos = transform.position; // Ã³À½¿£ Á¦ÀÚ¸®
+        targetPos = transform.position; // ì²˜ìŒì—” ì œìë¦¬
     }
 
     void Update()
     {
-        // ºÎµå·´°Ô ÀÌµ¿
+        // ë¶€ë“œëŸ½ê²Œ ì´ë™
         transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * speed);
     }
 
-    // MuseumHacking¿¡¼­ ÀÌ ÇÔ¼ö¸¦ ºÎ¸¦ °Ì´Ï´Ù!
+    // MuseumHackingì—ì„œ ì´ í•¨ìˆ˜ë¥¼ ë¶€ë¥¼ ê²ë‹ˆë‹¤!
     public void OpenDoor()
     {
         isOpen = true;
-        // ÇöÀç À§Ä¡¿¡¼­ À§·Î(¶Ç´Â ¼³Á¤ÇÑ ¹æÇâÀ¸·Î) ÀÌµ¿ ¸ñÇ¥ ¼³Á¤
+        // í˜„ì¬ ìœ„ì¹˜ì—ì„œ ìœ„ë¡œ(ë˜ëŠ” ì„¤ì •í•œ ë°©í–¥ìœ¼ë¡œ) ì´ë™ ëª©í‘œ ì„¤ì •
         targetPos = transform.position + openPositionOffset;
     }
 }

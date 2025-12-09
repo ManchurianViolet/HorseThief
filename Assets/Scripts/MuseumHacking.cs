@@ -67,6 +67,7 @@ public class MuseumHacking : MonoBehaviour
             }
         }
         UpdateLaptopScreen();
+        CheckPassword();
     }
 
     private void CheckPassword()
