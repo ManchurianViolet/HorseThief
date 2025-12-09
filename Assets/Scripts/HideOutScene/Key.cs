@@ -2,22 +2,21 @@
 
 public class Key : MonoBehaviour
 {
-    public string keyValue = "Q"; // 이 키의 글자 (인스펙터에서 설정)
-    private KeyBoardStage keyboardStage; // KeyBoardStage 참조
-    private float keyCooldown = 0.5f;
+    public string keyValue = "Q"; // 키 값 (인스펙터에서 "q"라고 적든 "Q"라고 적든 상관없음)
+
+    // 두 매니저 참조
+    private KeyBoardStage trainingManager;
+    private MuseumHacking missionManager;
+
+    private float keyCooldown = 0.2f;
     private float lastKeyTime;
 
-    // Start 메서드는 그대로 유지
     void Start()
     {
-        // KeyBoardStage 찾기
-        keyboardStage = FindAnyObjectByType<KeyBoardStage>();
-        if (keyboardStage == null)
-        {
-            Debug.LogError("KeyBoardStage를 찾을 수 없습니다!");
-        }
+        trainingManager = FindAnyObjectByType<KeyBoardStage>();
+        missionManager = FindAnyObjectByType<MuseumHacking>();
 
-        // 콜리더 설정 확인
+        // 콜리더 설정
         Collider collider = GetComponent<Collider>();
         if (collider == null)
         {
@@ -28,25 +27,40 @@ public class Key : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("HorseHead") && keyboardStage != null && Time.time - lastKeyTime > keyCooldown)
+        // "Nose" 태그만 인식
+        if (other.CompareTag("Nose") && Time.time - lastKeyTime > keyCooldown)
         {
-            lastKeyTime = Time.time; // 쿨다운 시간 갱신
+            lastKeyTime = Time.time;
+            PressKeyLogic();
+        }
+    }
 
-            // ★★★ 수정된 핵심 로직
-            if (keyValue == "Shift")
-            {
-                // keyValue가 "Shift"일 경우, 문자를 입력하는 대신 Shift 상태를 토글합니다.
-                keyboardStage.ToggleShift();
-                Debug.Log("Shift Key Toggled.");
-                keyboardStage.PlayKeyPressSound();
-            }
-            else
-            {
-                // 그 외 일반 키들은 문자를 입력합니다.
-                keyboardStage.AddCharacter(keyValue);
-                Debug.Log("Key Pressed: " + keyValue);
-                keyboardStage.PlayKeyPressSound();
-            }
+    private void PressKeyLogic()
+    {
+        // ★ [변경 1] Shift 키는 아예 무시 (눌러도 아무 일 없음)
+        if (keyValue == "Shift") return;
+
+        // ★ [변경 2] 소문자(q)로 적혀있어도 무조건 대문자(Q)로 변환
+        string upperKey = keyValue.ToUpper();
+
+        // 1. 연습장 (Training)
+        if (trainingManager != null)
+        {
+            // Shift 토글 기능 삭제 -> 그냥 글자 입력
+            trainingManager.AddCharacter(upperKey);
+
+            // 로그 확인용
+            Debug.Log($"Training Input: {upperKey}");
+
+            trainingManager.PlayKeyPressSound();
+        }
+        // 2. 미술관 (Museum)
+        else if (missionManager != null)
+        {
+            missionManager.AddCharacter(upperKey);
+
+            // 로그 확인용
+            Debug.Log($"Museum Input: {upperKey}");
         }
     }
 }

@@ -7,7 +7,7 @@ public class TruckManager : MonoBehaviour
     [SerializeField] private MuseumPainter painter;      // 그림 그리기 시스템
     [SerializeField] private GameObject player;         // 플레이어(말)
     [SerializeField] private GameObject museumSpawnPoint; // 미술관 입구 위치 (빈 오브젝트)
-
+    [SerializeField] private GameObject playerBrush;
     [Header("Back Canvas")]
     [SerializeField] private GameObject horseBackCanvas; // 말 등 뒤에 있는 Quad
     [SerializeField] private Renderer backCanvasRenderer; // 그 Quad의 렌더러
@@ -43,7 +43,10 @@ public class TruckManager : MonoBehaviour
             horseBackCanvas.SetActive(true); // 등 뒤 캔버스 켜기
             backCanvasRenderer.material.mainTexture = forgery; // 텍스처 복사
         }
-
+        if (playerBrush != null)
+        {
+            playerBrush.SetActive(false);
+        }
         // 3. 연출 (잠시 대기 or 암전)
         // 여기에 UI Fade Out 넣으면 좋습니다.
         yield return new WaitForSeconds(1.0f);
