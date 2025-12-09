@@ -38,7 +38,7 @@ public class KeyBoardStage : MonoBehaviour
     private bool isShiftPressed = false;
 
     // 단어 리스트
-    private List<string> targetPhrases = new List<string>() { "Paris123", "MonaLisaaa", "Louvre123" };
+    private List<string> targetPhrases = new List<string>() { "PARIS123", "MONALISA", "LOUVRE", "GALLERY" };
     private string currentTargetPhrase;
 
     void Start()
@@ -219,21 +219,21 @@ public class KeyBoardStage : MonoBehaviour
 
         if (playerTyping != null)
         {
-            if (character == "Space") inputText += " ";
-            else if (character == "BackSpace")
+            // Key.cs에서 대문자로 보내므로 대문자로 검사
+            if (character == "SPACE")
+            {
+                inputText += " ";
+            }
+            else if (character == "BACKSPACE")
             {
                 if (inputText.Length > 0) inputText = inputText.Substring(0, inputText.Length - 1);
             }
             else
             {
-                string charToAdd = character;
-                if (isShiftPressed)
-                {
-                    charToAdd = character.ToUpper();
-                    isShiftPressed = false;
-                }
-                inputText += charToAdd;
+                // 이미 대문자로 들어오므로 그대로 추가
+                inputText += character;
             }
+
             PlayKeyPressSound();
             UpdateTextDisplay();
         }

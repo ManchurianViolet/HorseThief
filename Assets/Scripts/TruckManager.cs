@@ -4,25 +4,27 @@ using System.Collections;
 public class TruckManager : MonoBehaviour
 {
     [Header("Phase Settings")]
-    [SerializeField] private MuseumPainter painter;      // 그림 그리기 시스템
-    [SerializeField] private GameObject player;         // 플레이어(말)
-    [SerializeField] private GameObject museumSpawnPoint; // 미술관 입구 위치 (빈 오브젝트)
-    [SerializeField] private GameObject playerBrush;
-    [Header("Back Canvas")]
-    [SerializeField] private GameObject horseBackCanvas; // 말 등 뒤에 있는 Quad
-    [SerializeField] private Renderer backCanvasRenderer; // 그 Quad의 렌더러
+    [SerializeField] private MuseumPainter painter;
+    [SerializeField] private GameObject player;
+    [SerializeField] private GameObject museumSpawnPoint;
+    [SerializeField] private GameObject playerBrush; // 트럭에서만 쓰는 붓
 
-    [Header("UI & Effects")]
-    [SerializeField] private GameObject truckLight;     // 트럭 조명 (연출용)
-    // 나중에 페이드 아웃 효과 UI 추가 가능
+    [Header("Back Canvas")]
+    [SerializeField] private GameObject horseBackCanvas;
+    [SerializeField] private Renderer backCanvasRenderer;
+
+    [Header("UI Control")]
+    [SerializeField] private GameObject truckUI;   // ★ [추가] 트럭 UI (Accuracy 점수판 등)
+    [SerializeField] private GameObject museumUI;  // ★ [추가] 미술관 UI (타이머, 비밀번호)
+    [SerializeField] private MuseumTimeManager timeManager; // ★ [추가] 타이머 시작 명령용
+
+    [Header("Effects")]
+    [SerializeField] private GameObject truckLight;
 
     private bool isReady = false;
 
     void Update()
     {
-        // 그림 그리기 완료 (Y키)
-        // (PaperPainter의 기존 Y키 리셋 기능과 겹치지 않게 주의! 
-        //  PaperPainter의 Update에서 Y키 입력을 주석 처리하거나 여기서만 쓰도록 약속)
         if (!isReady && Input.GetKeyDown(KeyCode.Y))
         {
             StartCoroutine(DepartToMuseum());
@@ -34,33 +36,34 @@ public class TruckManager : MonoBehaviour
         isReady = true;
         Debug.Log("위조 완료! 미술관으로 출발합니다...");
 
-        // 1. 현재 그린 그림 가져오기
+        // 1. 그림 복사 & 붓 압수
         Texture2D forgery = painter.GetFinalTexture();
-
-        // 2. 말 등 뒤 캔버스에 그림 입히기
         if (horseBackCanvas != null && backCanvasRenderer != null)
         {
-            horseBackCanvas.SetActive(true); // 등 뒤 캔버스 켜기
-            backCanvasRenderer.material.mainTexture = forgery; // 텍스처 복사
+            horseBackCanvas.SetActive(true);
+            backCanvasRenderer.material.mainTexture = forgery;
         }
-        if (playerBrush != null)
-        {
-            playerBrush.SetActive(false);
-        }
-        // 3. 연출 (잠시 대기 or 암전)
-        // 여기에 UI Fade Out 넣으면 좋습니다.
+        if (playerBrush != null) playerBrush.SetActive(false);
+
+        // 2. ★ [추가] UI 교체 (바통 터치)
+        if (truckUI != null) truckUI.SetActive(false); // 트럭 UI(점수) 끄기
+        if (museumUI != null) museumUI.SetActive(true); // 미술관 UI(타이머) 켜기
+
+        // 3. 연출 및 이동
         yield return new WaitForSeconds(1.0f);
 
-        // 4. 미술관으로 텔레포트
         if (museumSpawnPoint != null)
         {
             player.transform.position = museumSpawnPoint.transform.position;
             player.transform.rotation = museumSpawnPoint.transform.rotation;
         }
 
-        // 5. 트럭 조명 끄기 (최적화)
+        // 4. 조명 끄기 & ★ [추가] 타이머 시작
         if (truckLight != null) truckLight.SetActive(false);
 
-        // 6. 타이머 시작 등 게임 매니저에게 알리기 (나중에 추가)
+        if (timeManager != null)
+        {
+            timeManager.StartTimer(); // 타이머야 돌아라!
+        }
     }
 }

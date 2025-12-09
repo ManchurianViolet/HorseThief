@@ -1,54 +1,72 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.Events; // ¹® ¿­±â ÀÌº¥Æ®¿ë
+using UnityEngine.Events;
+using System.Collections; // ì½”ë£¨í‹´ìš©
 
 public class MuseumHacking : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private TMP_Text targetPwUI;     // ¿À¸¥ÂÊ À§ ¸ñÇ¥ ºñ¹ø
-    [SerializeField] private TMP_Text laptopScreenUI; // ³ëÆ®ºÏ È­¸é
+    [SerializeField] private TMP_Text targetPwUI;
+    [SerializeField] private TMP_Text laptopScreenUI;
 
     [Header("Settings")]
-    public string password = "HORSE"; // Á¤´ä (³ªÁß¿¡ GameManager¿¡¼­ ·£´ı »ı¼º °¡´É)
+    public string password = "HORSE";
 
     [Header("Door Event")]
-    public UnityEvent onHackSuccess; // ¼º°øÇÏ¸é ½ÇÇàÇÒ ±â´É (¹® ¿­±â µî)
+    public UnityEvent onHackSuccess;
 
     private string currentInput = "";
     private bool isHacked = false;
 
+    // â˜… ì»¤ì„œ ê¹œë¹¡ì„ ê´€ë ¨ ë³€ìˆ˜
+    private bool isCursorVisible = true;
+    private string cursorChar = "|";
+    private float blinkInterval = 0.5f;
+    private Coroutine blinkCoroutine;
+
     void Start()
     {
-        // ½ÃÀÛÇÒ ¶§ ¿À¸¥ÂÊ À§ UI¿¡ ¸ñÇ¥ ºñ¹ø ¶ç¿ì±â
         if (targetPwUI != null) targetPwUI.text = $"PASSWORD: {password}";
+
+        // ì»¤ì„œ ê¹œë¹¡ì„ ì‹œì‘
+        if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
+        blinkCoroutine = StartCoroutine(BlinkCursor());
+
         UpdateLaptopScreen();
     }
 
-    // Key.cs¿¡¼­ È£ÃâÇÒ ÇÔ¼ö
+    // Key.csì—ì„œ í˜¸ì¶œ
     public void AddCharacter(string key)
     {
         if (isHacked) return;
 
-        if (key == "BackSpace")
+        // â˜… ëŒ€ë¬¸ìë¡œ ë“¤ì–´ì˜¨ ëª…ë ¹ì–´ ì²˜ë¦¬
+        if (key == "BACKSPACE")
         {
             if (currentInput.Length > 0)
                 currentInput = currentInput.Substring(0, currentInput.Length - 1);
         }
-        else if (key == "Enter")
+        else if (key == "ENTER")
         {
             CheckPassword();
         }
-        else // ÀÏ¹İ ¹®ÀÚ ÀÔ·Â
+        else if (key == "SPACE") // â˜… ìŠ¤í˜ì´ìŠ¤ë°” ì¶”ê°€
         {
-            if (currentInput.Length < password.Length) // Á¤´ä ±æÀÌ±îÁö¸¸ ÀÔ·Â¹ŞÀ½
+            // ë¹„ë°€ë²ˆí˜¸ì— ê³µë°±ì´ í¬í•¨ë  ìˆ˜ ìˆë‹¤ë©´ ì¶”ê°€ (ë³´í†µì€ ë§‰ì§€ë§Œ ìš”ì²­í•˜ì…”ì„œ ë„£ìŒ)
+            currentInput += " ";
+        }
+        else
+        {
+            // ì¼ë°˜ ë¬¸ì (ê¸¸ì´ 1ì´ê³ , ëª…ë ¹ì–´ ì•„ë‹˜)
+            if (key.Length == 1)
             {
-                currentInput += key;
+                if (currentInput.Length < password.Length)
+                {
+                    currentInput += key;
+                }
             }
         }
         UpdateLaptopScreen();
-
-        // (¼±ÅÃ) ¿£ÅÍ ¾È ÃÄµµ ´Ù ¸ÂÀ¸¸é ¹Ù·Î ¿­¸®°Ô ÇÏ·Á¸é ¾Æ·¡ ÁÖ¼® ÇØÁ¦
-        // CheckPassword(); 
     }
 
     private void CheckPassword()
@@ -56,20 +74,39 @@ public class MuseumHacking : MonoBehaviour
         if (currentInput == password)
         {
             isHacked = true;
-            Debug.Log("ÇØÅ· ¼º°ø! ¹®ÀÌ ¿­¸³´Ï´Ù.");
+            Debug.Log("í•´í‚¹ ì„±ê³µ! ë¬¸ì´ ì—´ë¦½ë‹ˆë‹¤.");
+
+            // ì„±ê³µ ì‹œ ì»¤ì„œ ë„ê³  ë©”ì‹œì§€ ì¶œë ¥
+            StopCoroutine(blinkCoroutine);
             if (laptopScreenUI != null) laptopScreenUI.text = "ACCESS GRANTED";
 
-            // ¡Ú ¹® ¿©´Â ±â´É ½ÇÇà
             onHackSuccess.Invoke();
         }
         else
         {
-            // Æ²·ÈÀ» ¶§ ±ôºıÀÌ°Å³ª ¼Ò¸® ³ª´Â ¿¬Ãâ Ãß°¡ °¡´É
+            // í‹€ë ¸ì„ ë•Œ ë¡œì§ (í•„ìš”ì‹œ ì¶”ê°€)
         }
     }
 
+    // í™”ë©´ ê°±ì‹  (ê¸€ì + ì»¤ì„œ)
     private void UpdateLaptopScreen()
     {
-        if (laptopScreenUI != null) laptopScreenUI.text = currentInput;
+        if (laptopScreenUI == null) return;
+
+        if (isHacked) return; // í•´í‚¹ ì„±ê³µí–ˆìœ¼ë©´ ê°±ì‹  ì•ˆ í•¨
+
+        // ê¸€ì ë’¤ì— ì»¤ì„œ ë¶™ì´ê¸°
+        laptopScreenUI.text = currentInput + (isCursorVisible ? cursorChar : "");
+    }
+
+    // â˜… ê¹œë¹¡ì´ëŠ” ì»¤ì„œ ì½”ë£¨í‹´
+    private IEnumerator BlinkCursor()
+    {
+        while (!isHacked)
+        {
+            isCursorVisible = !isCursorVisible;
+            UpdateLaptopScreen(); // ê¹œë¹¡ì¼ ë•Œë§ˆë‹¤ í™”ë©´ ë‹¤ì‹œ ê·¸ë¦¬ê¸°
+            yield return new WaitForSeconds(blinkInterval);
+        }
     }
 }
