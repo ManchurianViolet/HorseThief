@@ -5,7 +5,7 @@ public class MuseumPainter : MonoBehaviour
 {
     [Header("UI Settings")]
     [SerializeField] private TextMeshProUGUI accuracyText;
-
+    public float FinalAccuracy { get; private set; } = 0f;
     [Header("Painting Settings")]
     public Color paintColor = Color.blue;
     [SerializeField] private float brushSize = 20f;
@@ -98,40 +98,6 @@ public class MuseumPainter : MonoBehaviour
         PaintAtUV(new Vector2((float)x / modifiableTexture.width,
                               (float)y / modifiableTexture.height));
     }
-    private void PaintAtContactPoint(GameObject brush)
-    {
-        Ray ray = new Ray(brush.transform.position, transform.forward);
-        RaycastHit hit;
-        Collider myCollider = GetComponent<Collider>();
-
-        // 1. 콜라이더 확인
-        if (myCollider == null)
-        {
-            Debug.LogError("캔버스에 Collider가 없습니다! Mesh Collider를 추가하세요.");
-            return;
-        }
-
-        // 2. 레이캐스트 시도 (방향 3곳 체크)
-        bool isHit = false;
-
-        // 정면, 후면, 위쪽 3방향으로 쏴봄
-        if (myCollider.Raycast(new Ray(brush.transform.position, transform.forward), out hit, 2.0f)) isHit = true;
-        else if (myCollider.Raycast(new Ray(brush.transform.position, -transform.forward), out hit, 2.0f)) isHit = true;
-        else if (myCollider.Raycast(new Ray(brush.transform.position, transform.up), out hit, 2.0f)) isHit = true;
-        // 트럭 이젤 방향 문제일 수 있으니 붓 -> 캔버스 방향으로 직접 쏘기
-        else if (myCollider.Raycast(new Ray(brush.transform.position, (transform.position - brush.transform.position).normalized), out hit, 2.0f)) isHit = true;
-
-        if (isHit)
-        {
-            PaintAtUV(hit.textureCoord);
-        }
-        else
-        {
-            // 붓은 닿았는데 레이캐스트가 실패함 -> 붓이 너무 깊이 박혔거나, 방향이 안 맞음
-            // Debug.Log("붓은 닿았으나 정확한 표면 좌표를 못 찾음 (비비는 중...)");
-        }
-    }
-
     private void PaintAtUV(Vector2 uv)
     {
         int x = (int)(uv.x * modifiableTexture.width);
@@ -227,6 +193,7 @@ public class MuseumPainter : MonoBehaviour
 
         float accuracy = 0f;
         if (sampledTotal > 0) accuracy = (float)correctPixelsCount / sampledTotal * 100f;
+        FinalAccuracy = accuracy;
         UpdateAccuracyUI(accuracy);
     }
 

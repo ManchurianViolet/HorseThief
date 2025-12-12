@@ -84,6 +84,24 @@ public class InteractiveArt : MonoBehaviour
 
         // 5. 바로 채점 (위치가 아니라 '그림이 바뀌었는지' 확인)
         CalculateScore();
+
+        // [기존 코드 아래에 추가] ---------------------------------
+
+        Debug.Log("📞 HighwayManager에게 탈출 신호를 보냅니다.");
+
+        // 임시 점수 (나중에 MuseumPainter에서 진짜 점수 가져오도록 수정 가능)
+        float currentScore = 55f;
+
+        // 씬에 있는 HighwayManager를 찾아서 실행
+        HighwayManager manager = FindObjectOfType<HighwayManager>();
+        if (manager != null)
+        {
+            manager.StartEscapeSequence();
+        }
+        else
+        {
+            Debug.LogError("🚨 씬에 HighwayManager가 없습니다! 생성해주세요.");
+        }
     }
 
     // ---------------------------------------------------------

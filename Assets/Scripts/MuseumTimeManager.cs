@@ -4,18 +4,26 @@ using TMPro;
 public class MuseumTimeManager : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField] private float limitTime = 180f; // 3ºĞ (ÃÊ ´ÜÀ§)
+    [SerializeField] private float limitTime = 180f; // 3ë¶„
     [SerializeField] private TextMeshProUGUI timerText;
 
     private float currentTime;
     private bool isRunning = false;
 
-    // ¿ÜºÎ(TruckManager)¿¡¼­ ÀÌ ÇÔ¼ö¸¦ ºÎ¸£¸é Å¸ÀÌ¸Ó ½ÃÀÛ!
     public void StartTimer()
     {
         currentTime = limitTime;
         isRunning = true;
-        gameObject.SetActive(true); // ³ª ÀÚ½Å(UI)À» ÄÔ
+        gameObject.SetActive(true);
+    }
+
+    // â˜… [ì¶”ê°€] ê³ ì†ë„ë¡œ ì§„ì… ì‹œ ë³´ë„ˆìŠ¤ ì‹œê°„ì„ ë”í•´ì£¼ëŠ” í•¨ìˆ˜
+    public void AddBonusTime(float bonusSeconds)
+    {
+        currentTime += bonusSeconds;
+
+        // (ì„ íƒì‚¬í•­) ì‹œê°„ì´ ëŠ˜ì–´ë‚¬ë‹¤ëŠ” ê±¸ ë¡œê·¸ë¡œ í™•ì¸
+        Debug.Log($"â³ ë³´ë„ˆìŠ¤ ì‹œê°„ {bonusSeconds}ì´ˆ íšë“! í˜„ì¬ ë‚¨ì€ ì‹œê°„: {currentTime:F1}ì´ˆ");
     }
 
     void Update()
@@ -24,20 +32,18 @@ public class MuseumTimeManager : MonoBehaviour
 
         currentTime -= Time.deltaTime;
 
-        // ½Ã°£ Æ÷¸Ë (00:00)
         int min = Mathf.FloorToInt(currentTime / 60);
         int sec = Mathf.FloorToInt(currentTime % 60);
 
         if (timerText != null)
             timerText.text = $"{min:00}:{sec:00}";
 
-        // ½Ã°£ Á¾·á
         if (currentTime <= 0)
         {
             currentTime = 0;
             isRunning = false;
-            Debug.Log("½Ã°£ ÃÊ°ú! °æÂû Ãâµ¿!");
-            // ³ªÁß¿¡ ¿©±â¿¡ °ÔÀÓ ¿À¹ö ·ÎÁ÷ Ãß°¡
+            Debug.Log("ì‹œê°„ ì´ˆê³¼! ê²½ì°° ì¶œë™!");
+            // ë‚˜ì¤‘ì— HighwayManagerì—ì„œ ê²Œì„ì˜¤ë²„ ì²˜ë¦¬ ì—°ê²° ê°€ëŠ¥
         }
     }
 }
