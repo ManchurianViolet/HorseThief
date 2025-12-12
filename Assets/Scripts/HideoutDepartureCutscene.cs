@@ -35,7 +35,10 @@ public class HideoutDepartureCutscene : MonoBehaviour
     [SerializeField] private float legSpinSpeed = 700f; // 회전 속도 (빠를수록 웃김)
     private bool isCutscenePlaying = false;
     private Rigidbody playerRb;
-
+    private float currentSpeedFL;
+    private float currentSpeedFR;
+    private float currentSpeedBL;
+    private float currentSpeedBR;
     private void Start()
     {
         // 페이드 패널 초기화
@@ -141,7 +144,12 @@ public class HideoutDepartureCutscene : MonoBehaviour
         if (splineLength <= 0.01f) yield break;
 
         Debug.Log($"🚶 이동 시작! (총 거리: {splineLength:F1}m)");
-
+        // ★ [추가] 걷기 시작할 때, 다리마다 속도를 랜덤하게 정해줍니다!
+        // 기본 속도(legSpinSpeed)의 80% ~ 150% 사이에서 랜덤 결정
+        currentSpeedFL = legSpinSpeed * Random.Range(0.6f, 1.5f);
+        currentSpeedFR = legSpinSpeed * Random.Range(0.6f, 1.5f);
+        currentSpeedBL = legSpinSpeed * Random.Range(0.6f, 1.5f);
+        currentSpeedBR = legSpinSpeed * Random.Range(0.6f, 1.5f);
         float distanceTraveled = 0f;
 
         while (distanceTraveled < splineLength)
@@ -203,13 +211,19 @@ public class HideoutDepartureCutscene : MonoBehaviour
     // ★ [추가] 다리 회전 함수
     private void RotateLegs()
     {
-        float rotAmount = legSpinSpeed * Time.deltaTime;
+        // ★ [수정 1] 방향 반대: Vector3.right -> Vector3.left (또는 -Vector3.right)
+        // ★ [수정 2] 속도 랜덤: 위에서 정한 개별 속도(currentSpeedXX) 사용
 
-        // 다리가 있다면 X축(Right) 기준으로 회전시킴
-        // (만약 다리가 이상한 방향으로 돌면 Vector3.forward나 up으로 바꿔보세요)
-        if (legFL) legFL.Rotate(Vector3.right * rotAmount);
-        if (legFR) legFR.Rotate(Vector3.right * rotAmount);
-        if (legBL) legBL.Rotate(Vector3.right * rotAmount);
-        if (legBR) legBR.Rotate(Vector3.right * rotAmount);
+        // 앞왼쪽
+        if (legFL) legFL.Rotate(Vector3.left * currentSpeedFL * Time.deltaTime);
+
+        // 앞오른쪽
+        if (legFR) legFR.Rotate(Vector3.left * currentSpeedFR * Time.deltaTime);
+
+        // 뒤왼쪽
+        if (legBL) legBL.Rotate(Vector3.left * currentSpeedBL * Time.deltaTime);
+
+        // 뒤오른쪽
+        if (legBR) legBR.Rotate(Vector3.left * currentSpeedBR * Time.deltaTime);
     }
 }
