@@ -771,6 +771,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Police Car (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5297841551820179128, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.51
@@ -830,13 +834,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 69420850}
   m_SourcePrefab: {fileID: 100100000, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
 --- !u!1 &69420849 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
   m_PrefabInstance: {fileID: 69420848}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &69420850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 69420849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ad0b7e9f67edb4da4ac34003c766c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lane: {fileID: 606856355}
+  minSpeed: 20
+  maxSpeed: 30
 --- !u!1 &90661996
 GameObject:
   m_ObjectHideFlags: 0
@@ -8338,6 +8360,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Police Car (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5297841551820179128, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.51
@@ -8397,13 +8423,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 951783521}
   m_SourcePrefab: {fileID: 100100000, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
 --- !u!1 &951783520 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
   m_PrefabInstance: {fileID: 951783519}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &951783521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 951783520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ad0b7e9f67edb4da4ac34003c766c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lane: {fileID: 557226004}
+  minSpeed: 20
+  maxSpeed: 30
 --- !u!1 &954028580
 GameObject:
   m_ObjectHideFlags: 0
@@ -9480,6 +9524,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Police Car (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5297841551820179128, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.51
@@ -9539,13 +9587,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1114474456}
   m_SourcePrefab: {fileID: 100100000, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
 --- !u!1 &1114474455 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
   m_PrefabInstance: {fileID: 1114474454}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1114474456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1114474455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ad0b7e9f67edb4da4ac34003c766c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lane: {fileID: 633468060}
+  minSpeed: 20
+  maxSpeed: 30
 --- !u!1 &1134873286
 GameObject:
   m_ObjectHideFlags: 0
@@ -12217,6 +12283,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Police Car
       objectReference: {fileID: 0}
+    - target: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5297841551820179128, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.51
@@ -12276,13 +12346,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1558790766}
   m_SourcePrefab: {fileID: 100100000, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
 --- !u!1 &1558790765 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
   m_PrefabInstance: {fileID: 1558790764}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1558790766
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1558790765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ad0b7e9f67edb4da4ac34003c766c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lane: {fileID: 1588857462}
+  minSpeed: 20
+  maxSpeed: 30
 --- !u!1 &1573110558
 GameObject:
   m_ObjectHideFlags: 0
@@ -13157,6 +13245,7 @@ GameObject:
   - component: {fileID: 1700852238}
   - component: {fileID: 1700852237}
   - component: {fileID: 1700852236}
+  - component: {fileID: 1700852240}
   m_Layer: 0
   m_Name: Highway_GoalLine
   m_TagString: Untagged
@@ -13179,9 +13268,9 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -13253,6 +13342,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1700852240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700852235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a79aced387d2f9408ff604ec06750c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  successDelay: 1
 --- !u!1 &1702028838
 GameObject:
   m_ObjectHideFlags: 0
@@ -14616,6 +14718,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Police Car (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5297841551820179128, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.51
@@ -14675,13 +14781,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1941958220}
   m_SourcePrefab: {fileID: 100100000, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
 --- !u!1 &1941958219 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 29509227996226053, guid: 245bcff942a0f1d49abdc2fa70452d86, type: 3}
   m_PrefabInstance: {fileID: 1941958218}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1941958220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1941958219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ad0b7e9f67edb4da4ac34003c766c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lane: {fileID: 1134873287}
+  minSpeed: 20
+  maxSpeed: 30
 --- !u!1 &1948484123
 GameObject:
   m_ObjectHideFlags: 0
