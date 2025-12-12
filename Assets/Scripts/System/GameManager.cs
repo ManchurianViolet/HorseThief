@@ -158,8 +158,6 @@ public class GameManager : MonoBehaviour
 
         Debug.Log($"미션 확정! 목표: {currentMissionTarget.artName} (번호: {currentTargetIndex})");
 
-        // 6. 로딩 씬으로 출발!
-        SceneManager.LoadScene("LoadingScene");
     }
     [ContextMenu("Reset Data")]
     public void ResetData()

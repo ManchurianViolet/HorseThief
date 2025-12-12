@@ -98,8 +98,23 @@ public class LaptopHeistTab : MonoBehaviour
     // ====================================================
     public void OnClickPopupAction() // "잠입" 버튼
     {
-        // 미션 생성 및 로딩 씬 이동
-        GameManager.Instance.GenerateMission(currentIndex);
+        // ★ [기존 코드 - 삭제하거나 주석 처리]
+        // GameManager.Instance.GenerateMission(currentIndex);
+
+        // ★ [새 코드 - 추가]
+        HideoutDepartureCutscene cutscene = FindObjectOfType<HideoutDepartureCutscene>();
+
+        if (cutscene != null)
+        {
+            cutscene.StartDeparture(currentIndex);
+            Debug.Log($"🎬 {currentIndex + 1}탄 출발 연출 시작!");
+        }
+        else
+        {
+            // 연출 스크립트가 없으면 기존 방식으로 (안전장치)
+            Debug.LogWarning("⚠️ HideoutDepartureCutscene을 찾을 수 없습니다. 바로 이동합니다.");
+            GameManager.Instance.GenerateMission(currentIndex);
+        }
     }
 
     public void OnClickPopupClose() // "X" 버튼
