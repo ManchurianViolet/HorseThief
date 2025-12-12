@@ -75,21 +75,42 @@ public class PoliceCarSpline : MonoBehaviour
         }
     }
 
-    // ★ [디버깅 강화] 충돌 감지
-    void OnTriggerEnter(Collider other)
+    // ★ [수정] OnCollisionEnter 사용 (물리 충돌)
+    void OnCollisionEnter(Collision collision)
     {
+        Collider other = collision.collider;
+
         // 일단 뭐든 닿으면 로그 출력
-        Debug.Log($"🚨 [경찰차] 충돌 감지! 이름: {other.name}, 태그: {other.tag}");
+        Debug.Log($"🚨 [경찰차 {gameObject.name}] 충돌 감지! 이름: {other.name}, 태그: {other.tag}");
+
+        // ★ [임시] 일단 말 이름이 포함되면 게임오버 (태그 무시)
+        string otherName = other.name.ToLower();
+        if (otherName.Contains("horse") || otherName.Contains("player"))
+        {
+            Debug.Log("🚨🚨🚨 [이름으로 감지] 경찰차 검거! GAME OVER 🚨🚨🚨");
+            GameOver();
+            return;
+        }
 
         // Rigidbody 확인
         Rigidbody rb = other.attachedRigidbody;
         if (rb != null)
         {
-            Debug.Log($"🔍 Rigidbody 발견! 태그: {rb.tag}");
+            Debug.Log($"🔍 Rigidbody 발견! 오브젝트: {rb.name}, 태그: {rb.tag}");
 
+            // Rigidbody 이름으로도 체크
+            string rbName = rb.name.ToLower();
+            if (rbName.Contains("horse") || rbName.Contains("player"))
+            {
+                Debug.Log("🚨🚨🚨 [Rigidbody 이름으로 감지] 경찰차 검거! GAME OVER 🚨🚨🚨");
+                GameOver();
+                return;
+            }
+
+            // 태그로도 체크
             if (rb.CompareTag("HorseChest") || rb.CompareTag("Player"))
             {
-                Debug.Log("🚨🚨🚨 경찰차 검거! GAME OVER 🚨🚨🚨");
+                Debug.Log("🚨🚨🚨 [태그로 감지] 경찰차 검거! GAME OVER 🚨🚨🚨");
                 GameOver();
                 return;
             }
@@ -98,12 +119,12 @@ public class PoliceCarSpline : MonoBehaviour
         // 직접 태그 확인
         if (other.CompareTag("HorseChest") || other.CompareTag("Player"))
         {
-            Debug.Log("🚨🚨🚨 경찰차 검거! GAME OVER 🚨🚨🚨");
+            Debug.Log("🚨🚨🚨 [직접 태그로 감지] 경찰차 검거! GAME OVER 🚨🚨🚨");
             GameOver();
         }
         else
         {
-            Debug.LogWarning($"⚠️ 경찰차가 뭔가 건드렸지만 플레이어는 아님. 태그: {other.tag}");
+            Debug.LogWarning($"⚠️ 경찰차가 뭔가 건드렸지만 플레이어는 아님. 이름: {other.name}, 태그: {other.tag}");
         }
     }
 
