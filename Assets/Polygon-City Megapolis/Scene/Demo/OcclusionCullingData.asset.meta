@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 580a380cea38b5d49a8bd0d3dfba0736
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 208916
+  packageName: POLY - Megapolis City Pack
+  packageVersion: 1.1
+  assetPath: Assets/Polygon-City Megapolis/Scene/Demo/OcclusionCullingData.asset
+  uploadId: 507001

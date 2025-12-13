@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d84d1b772d26f3742858b886edc09a7d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 348562
+  packageName: Museum 1
+  packageVersion: 1.0
+  assetPath: Assets/Museum/Prefabs/Exhibits/SM_deck_of_shame.prefab
+  uploadId: 829596
