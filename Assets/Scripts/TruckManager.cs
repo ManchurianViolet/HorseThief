@@ -27,7 +27,32 @@ public class TruckManager : MonoBehaviour
     {
         if (!isReady && Input.GetKeyDown(KeyCode.Y))
         {
-            StartCoroutine(DepartToMuseum());
+            // ★ [기존] 기존 방식 (바로 이동)
+            // StartCoroutine(DepartToMuseum());
+
+            // ★ [새 방식] 연출 실행
+            MuseumArrivalCutscene cutscene = FindObjectOfType<MuseumArrivalCutscene>();
+
+            if (cutscene != null)
+            {
+                Texture2D forgery = painter.GetFinalTexture();
+                if (horseBackCanvas != null && backCanvasRenderer != null)
+                {
+                    horseBackCanvas.SetActive(true);
+                    backCanvasRenderer.material.mainTexture = forgery;
+                }
+                if (playerBrush != null) playerBrush.SetActive(false);
+                if (truckUI != null) truckUI.SetActive(false); // 트럭 UI(점수) 끄기
+                isReady = true;
+                Debug.Log("🎬 미술관 도착 연출 시작!");
+                cutscene.StartArrivalCutscene();
+            }
+            else
+            {
+                Debug.LogError("❌ MuseumArrivalCutscene을 찾을 수 없습니다!");
+                // 안전장치: 연출 없이 기존 방식으로
+                StartCoroutine(DepartToMuseum());
+            }
         }
     }
 

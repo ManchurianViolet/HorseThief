@@ -78,7 +78,7 @@ MonoBehaviour:
     m_Value: 0
   sharpenIntensity:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 0.8
   sharpenDepthThreshold:
     m_OverrideState: 0
     m_Value: 0.035
