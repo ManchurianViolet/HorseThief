@@ -339,9 +339,9 @@ public class PaperPainter : MonoBehaviour
         if (accuracyText != null)
         {
             if (truncated >= 75f)
-                accuracyText.text = $"<color=green>Accuracy: {truncated}%</color>";
+                accuracyText.text = $"{truncated}%";
             else
-                accuracyText.text = $"Accuracy: {truncated}%";
+                accuracyText.text = $"{truncated}%";
         }
     }
 
