@@ -1016,8 +1016,8 @@ MonoBehaviour:
   - {fileID: 8066724491688377820}
   - {fileID: 3030964161669210418}
   tooltipPanel: {fileID: 4673064227381305407}
-  activeColor: {r: 0, g: 1, b: 0, a: 1}
-  inactiveColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  filledSprite: {fileID: 0}
+  emptySprite: {fileID: 0}
 --- !u!1 &738340456299581943
 GameObject:
   m_ObjectHideFlags: 0
@@ -3126,8 +3126,8 @@ MonoBehaviour:
   - {fileID: 3374130799784214512}
   - {fileID: 8716431764866395898}
   tooltipPanel: {fileID: 7822973894589619949}
-  activeColor: {r: 0, g: 1, b: 0, a: 1}
-  inactiveColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  filledSprite: {fileID: 0}
+  emptySprite: {fileID: 0}
 --- !u!1 &2417157070438376211
 GameObject:
   m_ObjectHideFlags: 0
@@ -3542,8 +3542,8 @@ MonoBehaviour:
   - {fileID: 6002531588038562402}
   - {fileID: 7701118812675406751}
   tooltipPanel: {fileID: 738340456299581943}
-  activeColor: {r: 0, g: 1, b: 0, a: 1}
-  inactiveColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  filledSprite: {fileID: 0}
+  emptySprite: {fileID: 0}
 --- !u!1 &2720050827886926812
 GameObject:
   m_ObjectHideFlags: 0
@@ -10261,8 +10261,8 @@ MonoBehaviour:
   - {fileID: 6755487667577465020}
   - {fileID: 3043319379910546187}
   tooltipPanel: {fileID: 8930027258951727813}
-  activeColor: {r: 0, g: 1, b: 0, a: 1}
-  inactiveColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  filledSprite: {fileID: 0}
+  emptySprite: {fileID: 0}
 --- !u!1 &8572235667722012916
 GameObject:
   m_ObjectHideFlags: 0

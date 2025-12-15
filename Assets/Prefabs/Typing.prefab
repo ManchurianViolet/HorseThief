@@ -80,9 +80,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b005286b6dcbbb241892028d7c1bbac3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playPosition: {fileID: 0}
+  gameUIPanel: {fileID: 0}
+  getoutPosition: {fileID: 0}
   playerTyping: {fileID: 7353504426093885918}
   successMessage: {fileID: 2238087975795857284}
-  title: {fileID: 8770565672245110227}
   question: {fileID: 415204816213526625}
   timerDisplay: {fileID: 7186960975052766313}
   Keys:

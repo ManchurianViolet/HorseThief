@@ -4257,7 +4257,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -6711,6 +6712,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18d3787356c53b84e985dff73e149b53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isControlEnabled: 1
   head: {fileID: 3259145342291536985}
   scull: {fileID: 0}
   neck: {fileID: 0}
@@ -6718,15 +6720,10 @@ MonoBehaviour:
   pushForce: 15000
   turnTorque: 4500
   headRotationSpeed: 100
+  moveSpeed: 1
   jumpForce: 575
   chargeMultiplier: 2
   maxChargeTime: 1
-  chargeTime: 0
-  isCharging: 0
-  isGrounded: 0
-  moveSpeed: 1
-  minY: -1
-  maxY: 9
   groundCheckDistance: 0.2
   obstacleLayer:
     serializedVersion: 2

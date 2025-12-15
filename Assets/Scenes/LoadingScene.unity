@@ -188,7 +188,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
   m_sharedMaterial: {fileID: 5088405639269051495, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 5088405639269051495, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -376,7 +377,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
   m_sharedMaterial: {fileID: 5088405639269051495, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 5088405639269051495, guid: 56712b7b9ad056746bb0ecd68dae4a6e, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -679,7 +681,6 @@ MonoBehaviour:
   targetArtImage: {fileID: 929102562}
   targetNameText: {fileID: 37477876}
   targetPriceText: {fileID: 506896197}
-  loadingBar: {fileID: 0}
   loadingTime: 3
 --- !u!4 &1386666155
 Transform:
