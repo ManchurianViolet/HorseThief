@@ -44,7 +44,7 @@ public class TrainingEntrance : MonoBehaviour
         // 2. 그림 훈련장이 연결되어 있다면?
         else if (paperPainter != null)
         {
-            paperPainter.StartTraining(playerObj); // PaperPainter에도 StartTraining 함수가 있어야 함
+            paperPainter.StartTraining(playerObj);
             isStarted = true;
             Debug.Log("그림 훈련 입장!");
         }
@@ -62,32 +62,90 @@ public class TrainingEntrance : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    // ★ [추가] OnTriggerStay: 트리거 안에 계속 있으면 매 프레임 체크
+    private void OnTriggerStay(Collider other)
     {
-        Rigidbody targetRb = other.attachedRigidbody;
+        // 이미 플레이어가 인식되어 있으면 스킵 (중복 처리 방지)
+        if (isPlayerNear && playerObj != null) return;
 
-        // 태그 확인 (HorseChest)
+        // ★ [이중 체크] 1차: other 직접 태그 확인
+        if (other.CompareTag("HorseChest"))
+        {
+            SetPlayerNear(other.gameObject);
+            return;
+        }
+
+        // ★ [이중 체크] 2차: attachedRigidbody 확인
+        Rigidbody targetRb = other.attachedRigidbody;
         if (targetRb != null && targetRb.CompareTag("HorseChest"))
         {
-            playerObj = targetRb.gameObject;
-            isPlayerNear = true;
+            SetPlayerNear(targetRb.gameObject);
+        }
+    }
 
-            // 들어오면 "[F] 입장하기" 글씨 띄우기
-            if (interactionUI != null) interactionUI.SetActive(true);
+    private void OnTriggerEnter(Collider other)
+    {
+        // ★ [이중 체크] 1차: other 직접 태그 확인
+        if (other.CompareTag("HorseChest"))
+        {
+            SetPlayerNear(other.gameObject);
+            return;
+        }
+
+        // ★ [이중 체크] 2차: attachedRigidbody 확인
+        Rigidbody targetRb = other.attachedRigidbody;
+        if (targetRb != null && targetRb.CompareTag("HorseChest"))
+        {
+            SetPlayerNear(targetRb.gameObject);
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        Rigidbody targetRb = other.attachedRigidbody;
+        // ★ [이중 체크] 1차: other 직접 태그 확인
+        if (other.CompareTag("HorseChest"))
+        {
+            CheckPlayerExit(other.gameObject);
+            return;
+        }
 
+        // ★ [이중 체크] 2차: attachedRigidbody 확인
+        Rigidbody targetRb = other.attachedRigidbody;
         if (targetRb != null && targetRb.CompareTag("HorseChest"))
+        {
+            CheckPlayerExit(targetRb.gameObject);
+        }
+    }
+
+    // ★ [새 함수] 플레이어 진입 처리
+    private void SetPlayerNear(GameObject detectedPlayer)
+    {
+        playerObj = detectedPlayer;
+        isPlayerNear = true;
+
+        // 들어오면 "[F] 입장하기" 글씨 띄우기
+        if (interactionUI != null)
+        {
+            interactionUI.SetActive(true);
+            Debug.Log($"✅ [TrainingEntrance] UI 활성화 (감지된 오브젝트: {detectedPlayer.name})");
+        }
+    }
+
+    // ★ [새 함수] 플레이어 퇴장 처리
+    private void CheckPlayerExit(GameObject exitedPlayer)
+    {
+        // 저장된 플레이어와 같은 오브젝트일 때만 처리
+        if (exitedPlayer == playerObj)
         {
             isPlayerNear = false;
             playerObj = null;
 
             // 나가면 안내 문구 끄기
-            if (interactionUI != null) interactionUI.SetActive(false);
+            if (interactionUI != null)
+            {
+                interactionUI.SetActive(false);
+                Debug.Log("❌ [TrainingEntrance] UI 비활성화");
+            }
         }
     }
 }
