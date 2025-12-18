@@ -13,8 +13,8 @@ public class KeyBoardStage : MonoBehaviour
     private GameObject currentPlayer;
 
     [Header("UI Components")]
-    [SerializeField] private TextMeshPro playerTyping;
-    [SerializeField] private TextMeshPro successMessage;
+    [SerializeField] private TextMeshProUGUI playerTyping;
+    [SerializeField] private TextMeshProUGUI successMessage;
     // title은 굳이 제어 안 해도 되지만, 훈련 시작 시 켜고 싶다면 추가
     [SerializeField] private TextMeshProUGUI question;
     [SerializeField] private TextMeshProUGUI timerDisplay;
