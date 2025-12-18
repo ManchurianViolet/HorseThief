@@ -85,9 +85,16 @@ public class PaperPainter : MonoBehaviour
             Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
             currentPlayer.transform.position = getOutPosition.position;
-            currentPlayer.transform.rotation = getOutPosition.rotation;
+            Quaternion exitRotation = getOutPosition.rotation * Quaternion.Euler(0, 90, 0);
+            currentPlayer.transform.rotation = exitRotation;
             if (rb != null) rb.isKinematic = false;
+            HorseControl horseControl = currentPlayer.GetComponent<HorseControl>();
+            if (horseControl != null)
+            {
+                horseControl.ResetHeadPosition();
+            }
             currentPlayer = null;
+
         }
 
         if (playerBrush != null)

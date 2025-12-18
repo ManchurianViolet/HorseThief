@@ -43,6 +43,9 @@ public class HorseControl : MonoBehaviour
     private float baseHeadRotSpeed;
     private float baseMoveSpeed;
     private float baseJumpForce; // ★ [추가] 원래 점프력 기억
+    private Quaternion initialHeadRotation;
+    private Quaternion initialNeckRotation;
+    private Vector3 initialScullPosition;
 
     void Start()
     {
@@ -56,6 +59,13 @@ public class HorseControl : MonoBehaviour
         head = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008");
         scull = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008/spine.009/spine.010/scull");
         neck = transform.Find("horse.001/Root/spine.005/spine.006/spine.007/spine.008/spine.009");
+        if (frontShinL == null || head == null || neck == null || scull == null)
+        {
+            Debug.LogError("❌ 일부 관절을 찾을 수 없습니다! (head, neck, scull 등)");
+        }
+        initialHeadRotation = head.localRotation;
+        initialNeckRotation = neck.localRotation;
+        initialScullPosition = scull.localPosition;
 
         if (frontShinL == null || head == null) Debug.LogError("일부 관절을 찾을 수 없습니다!");
 
@@ -231,5 +241,13 @@ public class HorseControl : MonoBehaviour
     {
         float chargedJumpForce = jumpForce * (1f + (chargeTime / maxChargeTime) * (chargeMultiplier - 1f));
         rb.AddForce(Vector3.up * chargedJumpForce, ForceMode.Impulse);
+    }
+    public void ResetHeadPosition()
+    {
+        head.localRotation = initialHeadRotation;      // 머리 각도 복구
+        neck.localRotation = initialNeckRotation;      // 목 각도 복구
+        scull.localPosition = initialScullPosition;    // 목 길이 복구
+        currentRotationX = 0f;                         // 추적 변수 초기화
+        currentRotationZ = 0f;
     }
 }

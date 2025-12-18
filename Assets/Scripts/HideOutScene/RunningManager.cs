@@ -22,12 +22,6 @@ public class RunningManager : MonoBehaviour
     [SerializeField] private AudioClip gunSound;
     // [삭제됨] 축포, 피니시 사운드, 파티클 관련 변수들 제거
 
-    [Header("=== Lights (Optional) ===")]
-    [SerializeField] private GameObject light1;
-    [SerializeField] private GameObject light2;
-    [SerializeField] private GameObject light3;
-    [SerializeField] private Material[] lightMat;
-
     // --- 내부 로직 변수 ---
     private GameObject currentPlayer;     // 현재 훈련 중인 플레이어 오브젝트
     private HorseControl playerControl;   // 플레이어의 조작 스크립트 (카운트다운 때 멈추기 위해)
@@ -150,13 +144,19 @@ public class RunningManager : MonoBehaviour
             Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
             currentPlayer.transform.position = getOutPosition.position;
-            currentPlayer.transform.rotation = getOutPosition.rotation;
+            // ★ [수정 1] 시계방향 90도 회전 추가
+            Quaternion exitRotation = getOutPosition.rotation * Quaternion.Euler(0, 90, 0);
+            currentPlayer.transform.rotation = exitRotation;
             if (rb != null) rb.isKinematic = false;
         }
 
         // 3. 움직임 잠금 해제 (혹시 잠긴 채로 나갈까봐)
         if (playerControl != null) playerControl.enabled = true;
-
+        HorseControl horseControl = currentPlayer.GetComponent<HorseControl>();
+        if (horseControl != null)
+        {
+            horseControl.ResetHeadPosition();
+        }
         currentPlayer = null;
         playerControl = null;
     }
@@ -170,17 +170,15 @@ public class RunningManager : MonoBehaviour
         if (countdownText != null) countdownText.gameObject.SetActive(true);
 
         // 3, 2, 1 카운트
-        yield return ShowCount("3", light1);
-        yield return ShowCount("2", light2);
-        yield return ShowCount("1", light3);
+        yield return ShowCount("3");
+        yield return ShowCount("2");
+        yield return ShowCount("1");
 
         // GO!
         if (countdownText != null) countdownText.text = "GO!";
         if (audioSource != null && gunSound != null) audioSource.PlayOneShot(gunSound);
 
-        SetLightMaterial(light1, 2);
-        SetLightMaterial(light2, 2);
-        SetLightMaterial(light3, 2);
+
 
         // [삭제됨] 시작 파티클 제거 완료
 
@@ -232,11 +230,10 @@ public class RunningManager : MonoBehaviour
         // 현재는 자유롭게 뛰어놀게 둠.
     }
 
-    private IEnumerator ShowCount(string text, GameObject lightObj)
+    private IEnumerator ShowCount(string text)
     {
         if (countdownText != null) countdownText.text = text;
         if (audioSource != null && beepSound != null) audioSource.PlayOneShot(beepSound);
-        SetLightMaterial(lightObj, 1);
         yield return new WaitForSeconds(1f);
     }
 
@@ -262,9 +259,5 @@ public class RunningManager : MonoBehaviour
         return string.Format("{0:00}:{1:04.1f}", minutes, seconds);
     }
 
-    private void SetLightMaterial(GameObject lightObj, int matIndex)
-    {
-        if (lightObj != null && lightMat != null && lightMat.Length > matIndex)
-            lightObj.GetComponent<Renderer>().material = lightMat[matIndex];
-    }
+
 }

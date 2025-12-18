@@ -126,8 +126,14 @@ public class KeyBoardStage : MonoBehaviour
 
             // 위치와 회전 이동
             currentPlayer.transform.position = getoutPosition.position;
-            currentPlayer.transform.rotation = getoutPosition.rotation;
-
+            Quaternion exitRotation = getoutPosition.rotation * Quaternion.Euler(0, 90, 0);
+            currentPlayer.transform.rotation = exitRotation;
+            // ★ [수정 2] 머리 초기화 호출
+            HorseControl horseControl = currentPlayer.GetComponent<HorseControl>();
+            if (horseControl != null)
+            {
+                horseControl.ResetHeadPosition();
+            }
             // 물리 다시 원상복구
             if (rb != null) rb.isKinematic = false;
 
