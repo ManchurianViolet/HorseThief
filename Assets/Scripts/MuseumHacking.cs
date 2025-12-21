@@ -1,7 +1,6 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.Events;
-using System.Collections; // 코루틴용
+using System.Collections;
 
 public class MuseumHacking : MonoBehaviour
 {
@@ -12,13 +11,13 @@ public class MuseumHacking : MonoBehaviour
     [Header("Settings")]
     public string password = "HORSE";
 
-    [Header("Door Event")]
-    public UnityEvent onHackSuccess;
+    [Header("Laser System")]
+    [SerializeField] private GameObject[] lasers; // ★ [변경] 레이저 오브젝트 배열
 
     private string currentInput = "";
     private bool isHacked = false;
 
-    // ★ 커서 깜빡임 관련 변수
+    // 커서 깜빡임 관련 변수
     private bool isCursorVisible = true;
     private string cursorChar = "|";
     private float blinkInterval = 0.5f;
@@ -40,7 +39,7 @@ public class MuseumHacking : MonoBehaviour
     {
         if (isHacked) return;
 
-        // ★ 대문자로 들어온 명령어 처리
+        // 대문자로 들어온 명령어 처리
         if (key == "BACKSPACE")
         {
             if (currentInput.Length > 0)
@@ -50,9 +49,8 @@ public class MuseumHacking : MonoBehaviour
         {
             CheckPassword();
         }
-        else if (key == "SPACE") // ★ 스페이스바 추가
+        else if (key == "SPACE")
         {
-            // 비밀번호에 공백이 포함될 수 있다면 추가 (보통은 막지만 요청하셔서 넣음)
             currentInput += " ";
         }
         else
@@ -75,18 +73,36 @@ public class MuseumHacking : MonoBehaviour
         if (currentInput == password)
         {
             isHacked = true;
-            Debug.Log("해킹 성공! 문이 열립니다.");
+            Debug.Log("해킹 성공! 레이저 시스템을 끕니다.");
 
             // 성공 시 커서 끄고 메시지 출력
             StopCoroutine(blinkCoroutine);
             if (laptopScreenUI != null) laptopScreenUI.text = "ACCESS GRANTED";
 
-            onHackSuccess.Invoke();
+            // ★ [변경] 레이저들 끄기
+            DisableLasers();
         }
-        else
+    }
+
+    // ★ [새 함수] 레이저 비활성화
+    private void DisableLasers()
+    {
+        if (lasers == null || lasers.Length == 0)
         {
-            // 틀렸을 때 로직 (필요시 추가)
+            Debug.LogWarning("⚠️ 레이저가 연결되지 않았습니다!");
+            return;
         }
+
+        foreach (GameObject laser in lasers)
+        {
+            if (laser != null)
+            {
+                laser.SetActive(false);
+                Debug.Log($"🔴 레이저 꺼짐: {laser.name}");
+            }
+        }
+
+        Debug.Log($"✅ 총 {lasers.Length}개의 레이저 비활성화 완료!");
     }
 
     // 화면 갱신 (글자 + 커서)
@@ -100,7 +116,7 @@ public class MuseumHacking : MonoBehaviour
         laptopScreenUI.text = currentInput + (isCursorVisible ? cursorChar : "");
     }
 
-    // ★ 깜빡이는 커서 코루틴
+    // 깜빡이는 커서 코루틴
     private IEnumerator BlinkCursor()
     {
         while (!isHacked)

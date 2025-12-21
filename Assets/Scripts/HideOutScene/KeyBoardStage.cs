@@ -170,7 +170,7 @@ public class KeyBoardStage : MonoBehaviour
         {
             int randomIndex = Random.Range(0, targetPhrases.Count);
             currentTargetPhrase = targetPhrases[randomIndex];
-            if (question != null) question.text = $"PassWord: {currentTargetPhrase}";
+            if (question != null) question.text = $"{currentTargetPhrase}";
         }
     }
 
@@ -186,7 +186,7 @@ public class KeyBoardStage : MonoBehaviour
 
     private void UpdateTimerDisplay()
     {
-        if (timerDisplay != null) timerDisplay.text = $"Time: {currentTime:F1}";
+        if (timerDisplay != null) timerDisplay.text = $"{currentTime:F1}";
     }
 
     private void HandleSuccess()

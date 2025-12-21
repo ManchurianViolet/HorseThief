@@ -27,7 +27,6 @@ public class PaperPainter : MonoBehaviour
     [SerializeField] private Color paperBackgroundColor = new Color(0.9f, 0.85f, 0.7f, 1f);
     [SerializeField] private bool useTintedPaper = true;
 
-    // 내부 상태 변수
     private GameObject currentPlayer;
     private bool isTrainingActive = false;
 
@@ -84,17 +83,20 @@ public class PaperPainter : MonoBehaviour
         {
             Rigidbody rb = currentPlayer.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
+
             currentPlayer.transform.position = getOutPosition.position;
             Quaternion exitRotation = getOutPosition.rotation * Quaternion.Euler(0, 90, 0);
             currentPlayer.transform.rotation = exitRotation;
+
             if (rb != null) rb.isKinematic = false;
+
             HorseControl horseControl = currentPlayer.GetComponent<HorseControl>();
             if (horseControl != null)
             {
                 horseControl.ResetHeadPosition();
             }
-            currentPlayer = null;
 
+            currentPlayer = null;
         }
 
         if (playerBrush != null)
@@ -129,7 +131,7 @@ public class PaperPainter : MonoBehaviour
         if (!isTrainingActive) return;
         if (_other.gameObject.CompareTag("Brush"))
         {
-            TriggerCheck(_other.gameObject);
+            Debug.Log("✅ 붓 감지! 그리기 시작");
         }
     }
 
@@ -145,28 +147,16 @@ public class PaperPainter : MonoBehaviour
     private void OnTriggerExit(Collider _other)
     {
         if (!isTrainingActive) return;
-        if (_other.gameObject.CompareTag("Brush"))
-        {
-            // 실시간 판정이므로 Exit에서 특별히 할 일 없음
-        }
+        // Exit에서는 특별히 할 일 없음
     }
 
+    // ★ [완전 단순화] Raycast 제거, 직접 계산
     private void TriggerCheck(GameObject _checkObject)
     {
+        // OnTriggerStay가 이미 "붓이 캔버스 안에 있다"고 알려줌
+        // 그럼 그냥 붓 위치를 바로 그리면 됨!
         Vector3 brushPos = _checkObject.transform.position;
-        Vector3 direction = transform.up;
-        Ray ray1 = new Ray(brushPos, direction);
-        Ray ray2 = new Ray(brushPos, -direction);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray1, out hit, 1.5f, LayerMask.GetMask("Paper")) ||
-            Physics.Raycast(ray2, out hit, 1.5f, LayerMask.GetMask("Paper")))
-        {
-            if (hit.collider.gameObject == this.gameObject)
-            {
-                PaintAtPosition(hit.point);
-            }
-        }
+        PaintAtPosition(brushPos);
     }
 
     private void PaintAtPosition(Vector3 _worldPos)
@@ -219,7 +209,7 @@ public class PaperPainter : MonoBehaviour
         if (painted)
         {
             modifiableTexture.Apply();
-            RecalculateAccuracy(); // ★ 실시간 판정!
+            RecalculateAccuracy();
         }
     }
 
@@ -287,7 +277,6 @@ public class PaperPainter : MonoBehaviour
 
         correctPixelsCount = 0;
 
-        // ★ 성능 최적화: 샘플링 방식 (5칸씩 건너뛰며 체크)
         int step = 5;
         int sampledTotal = 0;
         int sampledCorrect = 0;
@@ -330,7 +319,6 @@ public class PaperPainter : MonoBehaviour
         }
         else
         {
-            // White area는 샘플링 비율로 추정
             int estimatedWhite = totalWhiteAreaPixels / (step * step);
             int estimatedTotal = sampledTotal + estimatedWhite;
             if (estimatedTotal > 0) accuracy = (float)(sampledCorrect + estimatedWhite) / estimatedTotal * 100f;

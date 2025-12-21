@@ -6,6 +6,7 @@ public class MuseumPainter : MonoBehaviour
     [Header("UI Settings")]
     [SerializeField] private TextMeshProUGUI accuracyText;
     public float FinalAccuracy { get; private set; } = 0f;
+
     [Header("Painting Settings")]
     public Color paintColor = Color.blue;
     [SerializeField] private float brushSize = 20f;
@@ -17,6 +18,12 @@ public class MuseumPainter : MonoBehaviour
     [Header("Target Settings")]
     [SerializeField] private Renderer referenceRenderer;
 
+    // ★ [추가] 감지 설정
+    [Header("Detection Settings")]
+    [SerializeField] private LayerMask canvasLayer; // 캔버스 레이어
+    [SerializeField] private float raycastDistance = 3f; // 감지 거리 (기존 1.5 -> 3)
+    [SerializeField] private bool useDirectRaycast = false; // 대안 모드
+
     private Texture2D modifiableTexture;
     private Color[] targetPixels;
 
@@ -26,7 +33,7 @@ public class MuseumPainter : MonoBehaviour
     private void Start()
     {
         CreateCleanCanvas();
-        UpdateAccuracyUI(0); // 시작하자마자 0% 띄우기
+        UpdateAccuracyUI(0);
 
         if (GameManager.Instance != null && GameManager.Instance.currentMissionTarget != null)
         {
@@ -35,15 +42,23 @@ public class MuseumPainter : MonoBehaviour
         }
         else
         {
-            // 테스트용 (타겟 없으면 종이 그대로 타겟 설정)
             if (paperTexture != null) SetTargetPainting(paperTexture);
+        }
+
+        // ★ [추가] 레이어 마스크 자동 설정
+        if (canvasLayer == 0)
+        {
+            canvasLayer = LayerMask.GetMask("Paper");
+            if (canvasLayer == 0)
+            {
+                Debug.LogWarning("⚠️ 'Paper' 레이어를 찾을 수 없습니다! 모든 레이어를 감지합니다.");
+                canvasLayer = ~0; // 모든 레이어
+            }
         }
     }
 
-    // 붓 감지
     private void OnTriggerEnter(Collider other)
     {
-        // 태그 확인 로그
         if (other.CompareTag("Brush"))
         {
             Debug.Log("붓이 닿았습니다! (Tag 확인 OK)");
@@ -58,27 +73,48 @@ public class MuseumPainter : MonoBehaviour
     {
         if (other.CompareTag("Brush"))
         {
-            TriggerCheck(other.gameObject); // 이름 변경
+            TriggerCheck(other.gameObject);
         }
     }
+
+    // ★ [개선] Raycast 로직 수정
     private void TriggerCheck(GameObject brush)
     {
         Vector3 brushPos = brush.transform.position;
-        Vector3 direction = transform.up; // 캔버스의 up 방향
-        Ray ray1 = new Ray(brushPos, direction);
-        Ray ray2 = new Ray(brushPos, -direction);
+        Vector3 direction = transform.up;
+
         RaycastHit hit;
 
-        // "Paper" 레이어 또는 적절한 레이어로 설정
-        if (Physics.Raycast(ray1, out hit, 1.5f) ||
-            Physics.Raycast(ray2, out hit, 1.5f))
+        // ★ [수정 1] 레이어 마스크 추가
+        if (Physics.Raycast(brushPos, direction, out hit, raycastDistance, canvasLayer) ||
+            Physics.Raycast(brushPos, -direction, out hit, raycastDistance, canvasLayer))
         {
             if (hit.collider.gameObject == this.gameObject)
             {
-                PaintAtPosition(hit.point); // UV 대신 월드 좌표 사용
+                PaintAtPosition(hit.point);
+                return;
+            }
+        }
+
+        // ★ [추가] 대안 모드: Raycast 실패 시 직접 계산
+        if (useDirectRaycast)
+        {
+            // 붓 위치를 캔버스의 로컬 좌표로 변환
+            Vector3 localPos = transform.InverseTransformPoint(brushPos);
+
+            // 캔버스 평면과의 거리 체크 (Y축 거리)
+            if (Mathf.Abs(localPos.y) < raycastDistance)
+            {
+                // 캔버스 범위 내에 있는지 확인
+                if (Mathf.Abs(localPos.x) < 5f && Mathf.Abs(localPos.z) < 5f)
+                {
+                    PaintAtPosition(brushPos);
+                    Debug.Log("✅ [직접 모드] 그리기 성공!");
+                }
             }
         }
     }
+
     private void PaintAtPosition(Vector3 worldPos)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldPos);
@@ -94,16 +130,15 @@ public class MuseumPainter : MonoBehaviour
         int x = (int)(uv.x * modifiableTexture.width);
         int y = (int)(uv.y * modifiableTexture.height);
 
-        // 나머지는 기존 PaintAtUV 로직 사용
         PaintAtUV(new Vector2((float)x / modifiableTexture.width,
                               (float)y / modifiableTexture.height));
     }
+
     private void PaintAtUV(Vector2 uv)
     {
         int x = (int)(uv.x * modifiableTexture.width);
         int y = (int)(uv.y * modifiableTexture.height);
 
-        // 캔버스 범위 밖인지 확인
         if (x < 0 || x >= modifiableTexture.width || y < 0 || y >= modifiableTexture.height) return;
 
         int brushSizeInt = (int)brushSize;
@@ -131,14 +166,13 @@ public class MuseumPainter : MonoBehaviour
         if (painted)
         {
             modifiableTexture.Apply();
-            RecalculateAccuracy(); // 칠할 때마다 점수 갱신
+            RecalculateAccuracy();
         }
     }
 
     private void CreateCleanCanvas()
     {
         if (paperTexture == null) return;
-        // Read/Write 체크 안되어있으면 여기서 에러 날 수 있음
         try
         {
             modifiableTexture = new Texture2D(paperTexture.width, paperTexture.height, TextureFormat.RGBA32, false);
@@ -167,7 +201,6 @@ public class MuseumPainter : MonoBehaviour
         if (targetPixels == null) return;
         correctPixelsCount = 0;
 
-        // 성능을 위해 샘플링 (10칸씩 건너뛰며 검사)
         int step = 5;
         int sampledTotal = 0;
 
