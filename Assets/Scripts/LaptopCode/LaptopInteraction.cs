@@ -106,6 +106,9 @@ public class LaptopInteraction : MonoBehaviour
             isPlayerNear = true;
             if (playerHorse == null)
                 playerHorse = other.attachedRigidbody.GetComponent<HorseControl>();
+            // ★ [수정] 노트북이 닫혀있을 때만 메시지 표시!
+            if (interactionText != null && !isLaptopOpen)
+                interactionText.SetActive(true);
             if (interactionText != null) interactionText.SetActive(true);
         }
     }
