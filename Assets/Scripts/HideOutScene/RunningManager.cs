@@ -179,24 +179,25 @@ public class RunningManager : MonoBehaviour
             switch (nextMilestoneIndex)
             {
                 case 0: // 100m
-                    if (record100m != null) record100m.text = timeString;
+                    if (record100m != null)
+                        record100m.text = $"100m : {timeString}";
                     if (background100m != null) background100m.SetActive(true); // ★ 배경 켜기!
                     break;
-                case 1: // 200m
-                    if (record200m != null) record200m.text = timeString;
-                    if (background200m != null) background200m.SetActive(true); // ★ 배경 켜기!
+                case 1:
+                    record200m.text = $"200m : {timeString}";
+                    background200m.SetActive(true);
                     break;
-                case 2: // 300m
-                    if (record300m != null) record300m.text = timeString;
-                    if (background300m != null) background300m.SetActive(true); // ★ 배경 켜기!
+                case 2:
+                    record300m.text = $"300m : {timeString}";
+                    background300m.SetActive(true);
                     break;
-                case 3: // 400m
-                    if (record400m != null) record400m.text = timeString;
-                    if (background400m != null) background400m.SetActive(true); // ★ 배경 켜기!
+                case 3:
+                    record400m.text = $"400m : {timeString}";
+                    background400m.SetActive(true);
                     break;
-                case 4: // 500m
-                    if (record500m != null) record500m.text = timeString;
-                    if (background500m != null) background500m.SetActive(true); // ★ 배경 켜기!
+                case 4:
+                    record500m.text = $"500m : {timeString}";
+                    background500m.SetActive(true);
                     FinishRace();
                     break;
             }
@@ -255,8 +256,6 @@ public class RunningManager : MonoBehaviour
 
     private string FormatTime(float time)
     {
-        int minutes = (int)(time / 60);
-        float seconds = time % 60;
-        return string.Format("{0:00}:{1:04.1f}", minutes, seconds);
+        return string.Format("{0:F1}s", time); // ← 이렇게 되어있어야 함!
     }
 }
