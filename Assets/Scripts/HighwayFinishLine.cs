@@ -1,132 +1,155 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Splines;
+using Unity.Cinemachine;
+using System.Collections;
 
 public class HighwayFinishLine : MonoBehaviour
 {
-    [Header("Success Settings")]
-    [SerializeField] private float successDelay = 1.0f;
+    [Header("Cutscene References")]
+    [SerializeField] private GameObject player;           // 말
+    [SerializeField] private HorseControl horseControl;   // 말 조작
+    [SerializeField] private GameObject truck;            // 탈출용 트럭
+    [SerializeField] private CinemachineCamera successCamera; // 연출용 카메라
+
+    [Header("Spline Paths")]
+    [SerializeField] private SplineContainer horseBoardingPath; // 말이 트럭 짐칸으로 점프하는 경로
+    [SerializeField] private SplineContainer truckEscapePath;   // 트럭이 멀리 떠나는 경로
+
+    [Header("Fade")]
+    [SerializeField] private UnityEngine.UI.Image fadePanel;
+    [SerializeField] private float fadeDuration = 1.5f;
 
     private bool hasFinished = false;
 
-    // ★ [디버깅] 시작할 때 설정 확인
+    // ★ 시작할 때 체크
     private void Start()
     {
-        Collider col = GetComponent<Collider>();
-        if (col == null)
-        {
-            Debug.LogError("❌ FinishLine에 Collider가 없습니다!");
-        }
-        else if (!col.isTrigger)
-        {
-            Debug.LogError("❌ FinishLine Collider의 Is Trigger가 꺼져있습니다!");
-        }
-        else
-        {
-            Debug.Log("✅ FinishLine 설정 확인 완료");
-        }
+        if (fadePanel != null) fadePanel.gameObject.SetActive(false);
+        if (successCamera != null) successCamera.Priority = 0;
     }
 
-    // ★ [디버깅] 뭐가 닿는지 전부 확인
     private void OnTriggerEnter(Collider other)
     {
-        // 일단 뭐든 닿으면 로그 출력
-        Debug.Log($"🔔 [FinishLine] 뭔가 닿았음! 이름: {other.name}, 태그: {other.tag}");
+        if (hasFinished) return;
 
-        // 중복 실행 방지
-        if (hasFinished)
-        {
-            Debug.Log("⚠️ 이미 완료됨 (중복 실행 방지)");
-            return;
-        }
-
-        // Rigidbody 확인 (말은 Rigidbody가 달려있을 수 있음)
-        Rigidbody rb = other.attachedRigidbody;
-        if (rb != null)
-        {
-            Debug.Log($"🔍 Rigidbody 발견! 태그: {rb.tag}");
-
-            if (rb.CompareTag("HorseChest") || rb.CompareTag("Player"))
-            {
-                hasFinished = true;
-                Debug.Log("🏁 [도착!] 결승선 통과! 미션 성공!");
-                OnMissionSuccess();
-                return;
-            }
-        }
-
-        // 직접 태그 확인
-        if (other.CompareTag("HorseChest") || other.CompareTag("Player"))
+        // 플레이어가 결승선에 닿으면
+        if (other.CompareTag("Player") || other.CompareTag("HorseChest"))
         {
             hasFinished = true;
-            Debug.Log("🏁 [도착!] 결승선 통과! 미션 성공!");
-            OnMissionSuccess();
-        }
-        else
-        {
-            Debug.LogWarning($"⚠️ 태그가 안 맞음! 현재 태그: {other.tag}");
+            Debug.Log("🏁 결승선 통과! 탈출 연출 시작.");
+            StartCoroutine(EscapeCutsceneRoutine());
         }
     }
 
-    private void OnMissionSuccess()
+    private IEnumerator EscapeCutsceneRoutine()
     {
-        // 1. 타이머 멈추기
-        MuseumTimeManager timeManager = FindObjectOfType<MuseumTimeManager>();
-        if (timeManager != null)
+        // 1. 게임 요소 정지 (타이머, 경찰차)
+        StopGameplayElements();
+
+        // 2. 조작 끄기 & 카메라 전환
+        if (horseControl != null) horseControl.isControlEnabled = false;
+        if (successCamera != null) successCamera.Priority = 200; // 카메라 뺏어오기
+
+        // 3. 말 물리 끄기 (스플라인 이동 위해)
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+        if (rb != null)
         {
-            timeManager.gameObject.SetActive(false);
-            Debug.Log("⏱️ 타이머 정지");
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
         }
 
-        // 2. 경찰차 멈추기
-        PoliceCarSpline[] policeCars = FindObjectsOfType<PoliceCarSpline>();
-        foreach (var car in policeCars)
-        {
-            car.gameObject.SetActive(false);
-        }
-        Debug.Log($"🚓 경찰차 {policeCars.Length}대 정지");
+        // 4. 말이 트럭으로 점프 (Boarding Path)
+        Debug.Log("🐴 트럭 탑승 중...");
+        yield return StartCoroutine(MoveAlongSpline(player.transform, horseBoardingPath, 15f)); // 속도 15
 
-        // 3. 보상 지급 & 데이터 저장
+        // 5. 말 숨기기 (트럭 안에 탄 척)
+        player.SetActive(false);
+
+        // 6. 트럭 출발 (Escape Path)
+        Debug.Log("🚚 트럭 출발!");
+        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, 25f)); // 속도 25
+
+        // 7. 암전 (Fade Out)
+        yield return StartCoroutine(FadeOut());
+
+        // 8. 정산 및 저장 -> 은신처 복귀
+        ProcessMissionSuccess();
+    }
+
+    // 스플라인 이동 도우미 함수
+    private IEnumerator MoveAlongSpline(Transform target, SplineContainer path, float speed)
+    {
+        if (path == null) yield break;
+
+        float len = path.CalculateLength();
+        float dist = 0f;
+
+        while (dist < len)
+        {
+            dist += speed * Time.deltaTime;
+            float t = Mathf.Clamp01(dist / len);
+
+            target.position = path.EvaluatePosition(t);
+            Vector3 dir = path.EvaluateTangent(t);
+
+            target.rotation = Quaternion.Slerp(target.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 10f);
+
+            yield return null;
+        }
+    }
+
+    private void StopGameplayElements()
+    {
+        // 타이머 끄기
+        var tm = FindObjectOfType<MuseumTimeManager>();
+        if (tm != null) tm.gameObject.SetActive(false);
+
+        // 경찰차 모두 끄기
+        var police = FindObjectsOfType<PoliceCarSpline>();
+        foreach (var car in police) car.gameObject.SetActive(false);
+    }
+
+    private IEnumerator FadeOut()
+    {
+        if (fadePanel != null)
+        {
+            fadePanel.gameObject.SetActive(true);
+            float t = 0;
+            while (t < 1)
+            {
+                t += Time.deltaTime / fadeDuration;
+                fadePanel.color = new Color(0, 0, 0, t);
+                yield return null;
+            }
+            fadePanel.color = Color.black;
+        }
+    }
+
+    private void ProcessMissionSuccess()
+    {
         if (GameManager.Instance != null && GameManager.Instance.currentMissionTarget != null)
         {
+            // 돈 지급
             int reward = GameManager.Instance.currentMissionTarget.price;
             GameManager.Instance.AddMoney(reward);
-            Debug.Log($"💰 보상 지급: ${reward}");
 
-            int targetIndex = GameManager.Instance.currentTargetIndex;
-            GameManager.Instance.data.collectedArts[targetIndex] = true;
-            Debug.Log($"🎨 그림 수집 완료: Index {targetIndex}");
+            // 도감 채우기
+            int tIndex = GameManager.Instance.currentTargetIndex;
+            GameManager.Instance.data.collectedArts[tIndex] = true;
 
-            int stageIndex = GameManager.Instance.currentTargetStageIndex;
-            int maxItems = (stageIndex == 5) ? 1 : 5;
-            int stolenCount = GameManager.Instance.data.GetStolenCount(stageIndex);
-
-            if (stolenCount >= maxItems && stageIndex < 5)
+            // 스테이지 해금 로직
+            int sIndex = GameManager.Instance.currentTargetStageIndex;
+            int max = (sIndex == 5) ? 1 : 5;
+            if (GameManager.Instance.data.GetStolenCount(sIndex) >= max && sIndex < 5)
             {
-                GameManager.Instance.data.unlockedStageIndex = stageIndex + 1;
-                Debug.Log($"🔓 다음 스테이지 해금: Stage {stageIndex + 2}");
+                GameManager.Instance.data.unlockedStageIndex = sIndex + 1;
             }
 
             GameManager.Instance.SaveGameData();
-            Debug.Log("💾 데이터 저장 완료");
-        }
 
-        // 4. 은신처로 복귀
-        Invoke(nameof(ReturnToHideout), successDelay);
-    }
-
-    private void ReturnToHideout()
-    {
-        if (GameManager.Instance != null)
-        {
-            int currentLevel = GameManager.Instance.data.currentHideoutLevel;
-            string sceneName = $"Hideout_Lv{currentLevel}";
-
-            Debug.Log($"🏠 은신처로 복귀: {sceneName}");
-            SceneManager.LoadScene(sceneName);
-        }
-        else
-        {
-            Debug.LogError("🚨 GameManager를 찾을 수 없습니다!");
+            // 은신처로 복귀
+            SceneManager.LoadScene($"Hideout_Lv{GameManager.Instance.data.currentHideoutLevel}");
         }
     }
 }
