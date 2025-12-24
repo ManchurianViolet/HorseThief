@@ -113,14 +113,14 @@ public class HighwayFinishLine : MonoBehaviour
 
         // 4. 말이 트럭으로 점프
         Debug.Log("🐴 트럭 탑승 중...");
-        yield return StartCoroutine(MoveAlongSpline(player.transform, horseBoardingPath, 15f));
+        yield return StartCoroutine(MoveAlongSpline(player.transform, horseBoardingPath, 10f, true));
 
         // 5. 말 숨기기
         player.SetActive(false);
 
         // 6. 트럭 출발
         Debug.Log("🚚 트럭 출발!");
-        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, 25f));
+        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, 15f));
 
         // 7. 암전
         yield return StartCoroutine(FadeOut());
@@ -129,7 +129,8 @@ public class HighwayFinishLine : MonoBehaviour
         ProcessMissionSuccess();
     }
 
-    private IEnumerator MoveAlongSpline(Transform target, SplineContainer path, float speed)
+    // ★ 뒤에 'bool isReverse' 추가 (기본값 false)
+    private IEnumerator MoveAlongSpline(Transform target, SplineContainer path, float speed, bool isReverse = false)
     {
         if (path == null) yield break;
 
@@ -145,7 +146,13 @@ public class HighwayFinishLine : MonoBehaviour
             Vector3 dir = path.EvaluateTangent(t);
 
             if (dir != Vector3.zero)
-                target.rotation = Quaternion.Slerp(target.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 10f);
+            {
+                // ★ 여기서 스위치 확인! 
+                // isReverse가 true면 -dir(반대), false면 그냥 dir(정방향)
+                Vector3 lookDir = isReverse ? -dir : dir;
+
+                target.rotation = Quaternion.Slerp(target.rotation, Quaternion.LookRotation(lookDir), Time.deltaTime * 10f);
+            }
 
             yield return null;
         }

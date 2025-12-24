@@ -166,4 +166,33 @@ public class GameManager : MonoBehaviour
         SaveGameData();
         Debug.Log("데이터 리셋 완료");
     }
+    // GameManager.cs 안에 추가/수정
+
+    public bool HasSaveData()
+    {
+        string path = Application.persistentDataPath + "/savefile.json";
+        return System.IO.File.Exists(path);
+    }
+
+    // "New Game" 눌렀을 때 실행할 함수
+    public void StartNewGame()
+    {
+        // 1. 데이터 초기화
+        data = new PlayerData();
+
+        // 2. 초기화된 데이터를 즉시 파일에 덮어쓰기 (기존 파일 삭제 효과)
+        SaveGameData();
+
+        // 3. 1번 은신처(또는 튜토리얼)로 이동
+        SceneManager.LoadScene("Hideout_Lv1");
+    }
+
+    // "Continue" 눌렀을 때 실행할 함수
+    public void ContinueGame()
+    {
+        LoadGameData(); // 파일 불러오기
+
+        // 저장된 은신처 레벨에 맞춰서 씬 이동
+        SceneManager.LoadScene($"Hideout_Lv{data.currentHideoutLevel}");
+    }
 }
