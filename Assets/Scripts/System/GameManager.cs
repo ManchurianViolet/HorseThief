@@ -10,8 +10,10 @@ public class GameManager : MonoBehaviour
     public int upgradeCost = 1;
     [Header("=== Heist System ===")]
     // ★ 전체 미술품 30개 (인스펙터에서 순서대로 등록 필수!)
-    public ArtPieceData[] allArtPieces = new ArtPieceData[30];
-
+    public ArtPieceData[] allArtPieces = new ArtPieceData[17];
+    // ★ 2. [신규 추가] 스테이지별 미술품 개수표 (총 7개 스테이지)
+    // 0번(튜토리얼): 1개, 1~5번: 3개, 6번(루브르): 1개
+    public int[] stageArtCounts = new int[] { 1, 3, 3, 3, 3, 3, 1 };
     // ★ 이번 판의 타겟 (로딩씬 & 미술관씬에서 이걸 갖다 씀)
     public ArtPieceData currentMissionTarget;
     // ★ [이 줄을 추가하세요!] 이번 판의 스테이지 번호 (로딩씬에서 씀)
@@ -123,11 +125,15 @@ public class GameManager : MonoBehaviour
     }
     public void GenerateMission(int stageIndex) // stageIndex: 0 ~ 5
     {
-        // 1. 이 스테이지의 보물 구간 (예: 2탄이면 5~9번)
-        int startIndex = stageIndex * 5;
+        // ★ 3. 시작 인덱스 계산 (이제 5개씩 일정하지 않으므로 반복문으로 더해야 함)
+        int startIndex = 0;
+        for (int i = 0; i < stageIndex; i++)
+        {
+            startIndex += stageArtCounts[i];
+        }
+        int maxItems = stageArtCounts[stageIndex];
         // ★ [추가] 목표 스테이지 번호 저장 (이게 없어서 에러 났음)
         currentTargetStageIndex = stageIndex;
-        int maxItems = (stageIndex == 5) ? 1 : 5;
         // 2. 안 훔친 것들만 골라내기 (후보 리스트 작성)
         List<int> candidates = new List<int>();
 

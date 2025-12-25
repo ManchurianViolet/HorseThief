@@ -5,7 +5,7 @@ public class PlayerData
 
     public int currentHideoutLevel = 1;
     public bool[] unlockedHideouts = new bool[3];
-    public bool[] collectedArts = new bool[30];
+    public bool[] collectedArts = new bool[17];
 
     // 변수 선언부 (여기도 0, 아래도 0이어야 함)
     public int powerLv = 0;
@@ -33,19 +33,33 @@ public class PlayerData
         jumpLv = 0;
 
         unlockedStageIndex = 0;
-        collectedArts = new bool[30];
+        collectedArts = new bool[17];
     }
 
+    // ★ 3. 개수 세는 함수 수정 (하드코딩 제거)
     public int GetStolenCount(int stageIndex)
     {
+        // GameManager가 없으면 계산 불가 (안전장치)
+        if (GameManager.Instance == null) return 0;
+
+        // 시작 번호 계산
+        int startIndex = 0;
+        for (int i = 0; i < stageIndex; i++)
+        {
+            startIndex += GameManager.Instance.stageArtCounts[i];
+        }
+
+        // 끝 번호(개수) 계산
+        int maxItems = GameManager.Instance.stageArtCounts[stageIndex];
+
         int count = 0;
-        int startIndex = stageIndex * 5;
-
-        int maxItems = (stageIndex == 5) ? 1 : 5;
-
         for (int i = 0; i < maxItems; i++)
         {
-            if (collectedArts[startIndex + i]) count++;
+            // 배열 범위 체크 안전장치 추가
+            if (startIndex + i < collectedArts.Length)
+            {
+                if (collectedArts[startIndex + i]) count++;
+            }
         }
         return count;
     }

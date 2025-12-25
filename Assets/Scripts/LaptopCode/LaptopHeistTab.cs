@@ -122,7 +122,7 @@ public class LaptopHeistTab : MonoBehaviour
         popupPanel.SetActive(false);
     }
 
-    private void OpenPopup(int index)
+    private void OpenPopup(int index) // ★ 여기 매개변수 이름이 'index'입니다.
     {
         StageInfo info = stageList[index];
         PlayerData data = GameManager.Instance.data;
@@ -132,27 +132,34 @@ public class LaptopHeistTab : MonoBehaviour
         popupName.text = info.stageName;
         popupDesc.text = $"{info.description}\n\n예상 수익: ${info.expectedProfit}";
 
-        // 2. 버튼 상태 결정 (잠김/완료/가능)
-        // (여기서 로직: 소거법 데이터 체크)
-        int maxItems = (index == 5) ? 1 : 5;
+        // 2. 버튼 상태 결정 (잠금/완료/가능)
+
+        // ★ [수정 1] dataIndex 대신 위에서 받은 'index'를 써야 합니다.
+        int maxItems = GameManager.Instance.stageArtCounts[index];
         int stolenCount = data.GetStolenCount(index);
         bool isComplete = (stolenCount >= maxItems);
 
-        // 잠김 체크 (1탄은 무조건 열림, 그 외는 이전 탄 완료 여부)
+        // ★ [수정 2] 'isLocked' 변수를 먼저 만들어줘야 합니다.
         bool isLocked = false;
-        if (index > 0)
+
+        // 잠금 체크 (1탄은 무조건 열림, 그 외는 이전 탄 완료 여부)
+        if (index > 0) // ★ dataIndex -> index
         {
-            int prevMax = (index - 1 == 5) ? 1 : 5;
-            if (data.GetStolenCount(index - 1) < prevMax) isLocked = true;
+            // 이전 스테이지의 목표 개수 가져오기
+            int prevMax = GameManager.Instance.stageArtCounts[index - 1]; // ★ dataIndex -> index
+
+            // 이전 스테이지 훔친 개수가 목표보다 적으면 잠금!
+            if (data.GetStolenCount(index - 1) < prevMax) isLocked = true; // ★ dataIndex -> index
         }
 
+        // 3. UI 버튼 상태 반영
         if (isComplete)
         {
             txtPopupAction.text = "정복 완료";
             btnPopupAction.interactable = false;
             btnPopupAction.image.color = Color.gray;
         }
-        else if (isLocked)
+        else if (isLocked) // 이제 isLocked 변수가 있어서 에러 안 남!
         {
             txtPopupAction.text = "잠금됨 (이전 단계 필요)";
             btnPopupAction.interactable = false;
@@ -199,17 +206,22 @@ public class LaptopHeistTab : MonoBehaviour
 
         // 데이터 가져오기
         PlayerData data = GameManager.Instance.data;
-        int maxItems = (dataIndex == 5) ? 1 : 5;
-        int stolenCount = data.GetStolenCount(dataIndex);
+        // ★ [수정] GameManager의 규칙표에서 개수 가져오기
+        int maxItems = GameManager.Instance.stageArtCounts[dataIndex];
 
+        int stolenCount = data.GetStolenCount(dataIndex);
         bool isComplete = (stolenCount >= maxItems);
+
+        // ★ [수정] 잠금 체크 로직
         bool isLocked = false;
         if (dataIndex > 0)
         {
-            int prevMax = (dataIndex - 1 == 5) ? 1 : 5;
+            // 이전 스테이지의 목표 개수 가져오기
+            int prevMax = GameManager.Instance.stageArtCounts[dataIndex - 1];
+
+            // 이전 스테이지 훔친 개수가 목표보다 적으면 잠금!
             if (data.GetStolenCount(dataIndex - 1) < prevMax) isLocked = true;
         }
-
         // 슬롯에게 정보 전달 (이미지, 상태 등)
         // *주의: 슬롯 스크립트도 약간 수정이 필요할 수 있습니다 (썸네일 변경 기능 추가 등)
         // 여기서는 기존 Initialize/UpdateState를 활용합니다.
