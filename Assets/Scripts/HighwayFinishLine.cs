@@ -16,94 +16,73 @@ public class HighwayFinishLine : MonoBehaviour
     [SerializeField] private SplineContainer horseBoardingPath;
     [SerializeField] private SplineContainer truckEscapePath;
 
+    [Header("Speed Settings")]
+    [SerializeField] private float horseBoardingSpeed = 5f;
+    [SerializeField] private float truckEscapeSpeed = 8f;
+
+    [Header("Truck Door Settings")]
+    [SerializeField] private Transform leftDoor;
+    [SerializeField] private Transform rightDoor;
+    [SerializeField] private float doorCloseDuration = 1.0f;
+    [SerializeField] private float doorCloseAngle = 120f;
+
     [Header("Fade")]
     [SerializeField] private UnityEngine.UI.Image fadePanel;
     [SerializeField] private float fadeDuration = 1.5f;
 
     private bool hasFinished = false;
 
-    // ★ 시작할 때 체크
     private void Start()
     {
         if (fadePanel != null) fadePanel.gameObject.SetActive(false);
         if (successCamera != null) successCamera.Priority = 0;
-
-        // ★ [디버깅] Collider 확인
-        Collider col = GetComponent<Collider>();
-        if (col == null)
-        {
-            Debug.LogError("❌ FinishLine에 Collider가 없습니다!");
-        }
-        else if (!col.isTrigger)
-        {
-            Debug.LogError("❌ FinishLine Collider의 Is Trigger가 꺼져있습니다!");
-        }
-        else
-        {
-            Debug.Log("✅ FinishLine 설정 확인 완료");
-        }
     }
 
-    // ★ [핵심 수정] 디버깅 + Rigidbody 체크 추가
+    // ★ [수정됨] 다시 강력해진 감지 로직!
     private void OnTriggerEnter(Collider other)
     {
-        // 일단 뭐가 닿는지 로그 출력
-        Debug.Log($"🏁 [FinishLine] 뭔가 닿았음! 이름: {other.name}, 태그: {other.tag}");
+        if (hasFinished) return;
 
-        // 중복 실행 방지
-        if (hasFinished)
+        // 1. 가장 확실한 방법: Rigidbody(몸통)를 찾아서 태그 확인
+        if (other.attachedRigidbody != null)
         {
-            Debug.Log("⚠️ 이미 완료됨 (중복 실행 방지)");
-            return;
-        }
-
-        // ★ [핵심] Rigidbody 확인 (말은 Rigidbody가 달려있음)
-        Rigidbody rb = other.attachedRigidbody;
-        if (rb != null)
-        {
-            Debug.Log($"🔍 Rigidbody 발견! 오브젝트: {rb.name}, 태그: {rb.tag}");
-
-            if (rb.CompareTag("HorseChest") || rb.CompareTag("Player"))
+            if (other.attachedRigidbody.CompareTag("HorseChest") || other.attachedRigidbody.CompareTag("Player"))
             {
-                hasFinished = true;
-                Debug.Log("🏁 [도착!] 결승선 통과! 탈출 연출 시작!");
-                StartCoroutine(EscapeCutsceneRoutine());
+                FinishLevel(); // 성공 처리!
                 return;
             }
         }
 
-        // 직접 태그 확인 (혹시 모를 경우 대비)
+        // 2. 그냥 닿은 녀석의 태그 확인
         if (other.CompareTag("HorseChest") || other.CompareTag("Player"))
         {
-            hasFinished = true;
-            Debug.Log("🏁 [도착!] 결승선 통과! 탈출 연출 시작!");
-            StartCoroutine(EscapeCutsceneRoutine());
+            FinishLevel();
             return;
         }
 
-        // ★ [추가] 이름으로도 체크 (최후의 수단)
-        string otherName = other.name.ToLower();
-        if (otherName.Contains("horse") || otherName.Contains("player"))
+        // 3. 최후의 수단: 이름으로 확인
+        if (other.name.ToLower().Contains("horse") || other.name.ToLower().Contains("player"))
         {
-            hasFinished = true;
-            Debug.Log("🏁 [이름으로 감지] 결승선 통과!");
-            StartCoroutine(EscapeCutsceneRoutine());
+            FinishLevel();
             return;
         }
+    }
 
-        Debug.LogWarning($"⚠️ 태그가 안 맞음! 현재 태그: {other.tag}");
+    // 성공 처리 분리 (코드 중복 방지)
+    private void FinishLevel()
+    {
+        hasFinished = true;
+        Debug.Log("🏁 [도착] 결승선 인식 성공! 엔딩 컷씬 시작!");
+        StartCoroutine(EscapeCutsceneRoutine());
     }
 
     private IEnumerator EscapeCutsceneRoutine()
     {
-        // 1. 게임 요소 정지
         StopGameplayElements();
 
-        // 2. 조작 끄기 & 카메라 전환
         if (horseControl != null) horseControl.isControlEnabled = false;
         if (successCamera != null) successCamera.Priority = 200;
 
-        // 3. 말 물리 끄기
         Rigidbody rb = player.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -111,25 +90,56 @@ public class HighwayFinishLine : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
         }
 
-        // 4. 말이 트럭으로 점프
+        // 1. 말이 트럭 탑승
         Debug.Log("🐴 트럭 탑승 중...");
-        yield return StartCoroutine(MoveAlongSpline(player.transform, horseBoardingPath, 10f, true));
+        yield return StartCoroutine(MoveAlongSpline(player.transform, horseBoardingPath, horseBoardingSpeed, true));
 
-        // 5. 말 숨기기
+        // 2. 말 숨기기
         player.SetActive(false);
 
-        // 6. 트럭 출발
-        Debug.Log("🚚 트럭 출발!");
-        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, 15f));
+        // 3. 문 닫기 연출
+        Debug.Log("🚪 문 닫는 중...");
+        yield return StartCoroutine(CloseDoorsRoutine());
 
-        // 7. 암전
+        // 4. 트럭 출발
+        Debug.Log("🚚 트럭 출발!");
+        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, truckEscapeSpeed));
+
+        // 5. 암전
         yield return StartCoroutine(FadeOut());
 
-        // 8. 정산 및 저장 -> 은신처 복귀
         ProcessMissionSuccess();
     }
 
-    // ★ 뒤에 'bool isReverse' 추가 (기본값 false)
+    private IEnumerator CloseDoorsRoutine()
+    {
+        if (leftDoor == null || rightDoor == null)
+        {
+            // 문 연결 안 했으면 그냥 패스 (에러 방지)
+            yield break;
+        }
+
+        float t = 0f;
+        Quaternion startRotL = leftDoor.localRotation;
+        Quaternion startRotR = rightDoor.localRotation;
+
+        // 목표 회전값 계산
+        Quaternion endRotL = startRotL * Quaternion.Euler(0, doorCloseAngle, 0);
+        Quaternion endRotR = startRotR * Quaternion.Euler(0, -doorCloseAngle, 0);
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / doorCloseDuration;
+            leftDoor.localRotation = Quaternion.Slerp(startRotL, endRotL, t);
+            rightDoor.localRotation = Quaternion.Slerp(startRotR, endRotR, t);
+            yield return null;
+        }
+
+        leftDoor.localRotation = endRotL;
+        rightDoor.localRotation = endRotR;
+        yield return new WaitForSeconds(0.5f);
+    }
+
     private IEnumerator MoveAlongSpline(Transform target, SplineContainer path, float speed, bool isReverse = false)
     {
         if (path == null) yield break;
@@ -147,10 +157,7 @@ public class HighwayFinishLine : MonoBehaviour
 
             if (dir != Vector3.zero)
             {
-                // ★ 여기서 스위치 확인! 
-                // isReverse가 true면 -dir(반대), false면 그냥 dir(정방향)
                 Vector3 lookDir = isReverse ? -dir : dir;
-
                 target.rotation = Quaternion.Slerp(target.rotation, Quaternion.LookRotation(lookDir), Time.deltaTime * 10f);
             }
 
@@ -160,11 +167,9 @@ public class HighwayFinishLine : MonoBehaviour
 
     private void StopGameplayElements()
     {
-        // 타이머 끄기
         var tm = FindObjectOfType<MuseumTimeManager>();
         if (tm != null) tm.gameObject.SetActive(false);
 
-        // 경찰차 모두 끄기
         var police = FindObjectsOfType<PoliceCarSpline>();
         foreach (var car in police) car.gameObject.SetActive(false);
     }
@@ -189,25 +194,23 @@ public class HighwayFinishLine : MonoBehaviour
     {
         if (GameManager.Instance != null && GameManager.Instance.currentMissionTarget != null)
         {
-            // 돈 지급
             int reward = GameManager.Instance.currentMissionTarget.price;
             GameManager.Instance.AddMoney(reward);
 
-            // 도감 채우기
             int tIndex = GameManager.Instance.currentTargetIndex;
             GameManager.Instance.data.collectedArts[tIndex] = true;
 
-            // 스테이지 해금 로직
             int sIndex = GameManager.Instance.currentTargetStageIndex;
-            int max = (sIndex == 5) ? 1 : 5;
-            if (GameManager.Instance.data.GetStolenCount(sIndex) >= max && sIndex < 5)
+            // 17개 패치 안전장치 적용
+            int max = (GameManager.Instance.stageArtCounts != null && sIndex < GameManager.Instance.stageArtCounts.Length)
+                      ? GameManager.Instance.stageArtCounts[sIndex] : 5;
+
+            if (GameManager.Instance.data.GetStolenCount(sIndex) >= max)
             {
-                GameManager.Instance.data.unlockedStageIndex = sIndex + 1;
+                GameManager.Instance.data.unlockedStageIndex = Mathf.Max(GameManager.Instance.data.unlockedStageIndex, sIndex + 1);
             }
 
             GameManager.Instance.SaveGameData();
-
-            // 은신처로 복귀
             SceneManager.LoadScene($"Hideout_Lv{GameManager.Instance.data.currentHideoutLevel}");
         }
     }
