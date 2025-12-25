@@ -208,7 +208,7 @@ public class HighwayFinishLine : MonoBehaviour
 
             if (target == player.transform)
             {
-                legRotationValue -= Time.deltaTime * 500f;
+                legRotationValue -= Time.deltaTime * 750f;
                 AnimateLegsWindmill(legRotationValue);
             }
 
