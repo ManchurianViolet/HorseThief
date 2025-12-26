@@ -247,4 +247,27 @@ public class HighwayFinishLine : MonoBehaviour
             SceneManager.LoadScene($"Hideout_Lv{GameManager.Instance.data.currentHideoutLevel}");
         }
     }
+    public void FailByTimeOver()
+    {
+        Debug.Log("⏰ 시간 초과! 트럭 출발!");
+        StartCoroutine(TruckLeaveAloneRoutine());
+    }
+
+    private IEnumerator TruckLeaveAloneRoutine()
+    {
+        // 1. 조작 차단
+        // if (horseControl != null) horseControl.isControlEnabled = false;
+
+        // 2. 카메라 전환 (트럭 비추기)
+        if (successCamera != null) successCamera.Priority = 200;
+
+        // 3. 문 닫기
+        yield return StartCoroutine(CloseDoorsRoutine());
+
+        // 4. 트럭 출발 (말 없이 트럭만 이동)
+        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, truckEscapeSpeed));
+
+        // 5. 트럭이 어느 정도 가면 (혹은 도착하면) UI 띄우기
+        FindObjectOfType<GameOverUI>().ShowBusted();
+    }
 }
