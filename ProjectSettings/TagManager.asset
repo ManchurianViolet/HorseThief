@@ -11,6 +11,7 @@ TagManager:
   - Paper
   - RivalHorseChest
   - Nose
+  - PoliceCar
   layers:
   - Default
   - TransparentFX

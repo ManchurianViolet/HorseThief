@@ -47,7 +47,16 @@ public class GameOverUI : MonoBehaviour
 
         // 2. 패널 켜기
         panelToShow.SetActive(true);
+        // ★ [요청하신 부분 수정] ★
+        // UI가 떴으니, 앞을 가리고 있는 검은 페이드 이미지를 투명하게(또는 끄기) 만듭니다.
+        if (fadePanel != null)
+        {
+            // 방법 A: 투명하게 만들기 (부드럽게 하려면 또 반복문 쓰면 됨)
+            fadePanel.color = new Color(0, 0, 0, 0);
 
+            // 방법 B: 아예 꺼버리기 (이게 더 확실함)
+            fadePanel.gameObject.SetActive(false);
+        }
         // 3. 커서 보이기
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;

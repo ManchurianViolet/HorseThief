@@ -127,7 +127,7 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0
   sepia:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0
   tintColor:
     m_OverrideState: 0

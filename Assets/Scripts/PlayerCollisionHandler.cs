@@ -1,14 +1,21 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Rendering;
+using Beautify.Universal;
 
 public class PlayerCollisionHandler : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameOverUI gameOverUI;
     [SerializeField] private Rigidbody myRb;
+    [SerializeField] private Volume globalVolume;
+
+    // ★ 말의 애니메이터와 조작 스크립트를 끄기 위해 가져옴
+    [SerializeField] private MonoBehaviour horseControlScript; // HorseControl 스크립트를 여기에 넣으세요
 
     [Header("Settings")]
-    [SerializeField] private float bounceForce = 20f; // 튕겨 나가는 힘
+    // ★ 질량 500을 날리려면 힘이 아주 커야 합니다! (기본값 50000으로 수정)
+    [SerializeField] private float bounceForce = 300000f;
 
     private bool isDead = false;
 
@@ -16,7 +23,6 @@ public class PlayerCollisionHandler : MonoBehaviour
     {
         if (isDead) return;
 
-        // 경찰차 태그 확인 (경찰차에 'PoliceCar' 태그 꼭 붙이세요!)
         if (collision.gameObject.CompareTag("PoliceCar"))
         {
             StartCoroutine(DieSequence(collision));
@@ -28,31 +34,55 @@ public class PlayerCollisionHandler : MonoBehaviour
         isDead = true;
         Debug.Log("💀 WASTED sequence start");
 
-        // 1. 물리력으로 뻥! 날리기
-        // (충돌 반대 방향 + 위쪽으로 힘을 가함)
-        Vector3 bounceDir = (transform.position - collision.contacts[0].point).normalized;
-        bounceDir += Vector3.up * 0.5f; // 약간 위로 뜨게
-        myRb.AddForce(bounceDir * bounceForce, ForceMode.Impulse);
+        // 1. ★ [중요] Beautify Sepia 즉시 적용 (Yield 전에 실행!)
+        if (globalVolume != null && globalVolume.profile.TryGet(out Beautify.Universal.Beautify beautify))
+        {
+            beautify.active = true;
 
-        // 말의 제어 스크립트 끄기 (HorseControl이 있다면)
-        // GetComponent<HorseControl>().enabled = false; 
-        // 대신 물리적인 회전(Ragdoll 느낌)을 위해 FreezeRotation 해제 추천
-        myRb.constraints = RigidbodyConstraints.None;
+            // Saturate 대신 Sepia를 1로!
+            beautify.sepia.overrideState = true;
+            beautify.sepia.value = 1f;
 
-        // 2. Beautify 회색조 처리 (Beautify 버전에 따라 API가 다를 수 있음)
-        // 보통 Beautify.instance.saturation = 0; 방식을 씀
-        // Beautify.instance.saturation = 0f; 
-        // Beautify.instance.vignetting = true; 
-        Debug.Log("🎨 화면 회색조 변경 (Beautify 적용)");
+            Debug.Log("🎨 Sepia(흑백) 즉시 적용 완료!");
+        }
+        else
+        {
+            Debug.LogError("⚠️ Global Volume이 연결되지 않았거나 Beautify 프로필이 없습니다!");
+        }
 
-        // 3. 슬로우 모션 (0.3배속)
+        // 2. ★ [중요] 애니메이터 끄기 (이게 켜져 있으면 절대 안 날아감)
+        if (horseControlScript != null) horseControlScript.enabled = false;
+
+        // 3. 물리 충돌 (뻥! 날리기)
+        if (myRb != null)
+        {
+            myRb.isKinematic = false;
+            myRb.constraints = RigidbodyConstraints.None; // 데굴데굴 구르게 잠금 해제
+
+            Vector3 bounceDir = (transform.position - collision.contacts[0].point).normalized;
+            bounceDir += Vector3.up * 1.0f; // 위로 솟구치게
+
+            myRb.AddForce(bounceDir * bounceForce, ForceMode.Impulse);
+            myRb.AddTorque(Random.insideUnitSphere * bounceForce, ForceMode.Impulse);
+        }
+
+        // 4. 슬로우 모션
         Time.timeScale = 0.3f;
-        Time.fixedDeltaTime = 0.02f * Time.timeScale; // 물리 연산도 같이 느려지게
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
 
-        // 4. 3초 대기 (Realtime 기준 3초)
+        // 5. 3초 대기 (흑백 화면 + 날아가는 모습 감상)
         yield return new WaitForSecondsRealtime(3.0f);
 
-        // 5. UI 호출
+        // 6. UI 표시
         if (gameOverUI != null) gameOverUI.ShowWasted();
+    }
+
+    // 게임 재시작 시 색상 복구
+    private void OnDestroy()
+    {
+        if (globalVolume != null && globalVolume.profile.TryGet(out Beautify.Universal.Beautify beautify))
+        {
+            beautify.sepia.value = 0f; // 원래대로 0
+        }
     }
 }
