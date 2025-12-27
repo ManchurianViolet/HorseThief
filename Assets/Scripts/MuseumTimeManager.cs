@@ -4,7 +4,7 @@ using TMPro;
 public class MuseumTimeManager : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField] private float limitTime = 180f; // 3분
+    [SerializeField] private float limitTime = 10f; // 3분
     [SerializeField] private TextMeshProUGUI timerText;
 
     // ★ [추가] 트럭 탈출 라인 스크립트를 연결할 변수

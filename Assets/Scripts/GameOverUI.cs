@@ -1,79 +1,93 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using UnityEngine.UI; // Image fade를 위해 필요
+using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour
 {
     [Header("UI Panels")]
-    [SerializeField] private GameObject wastedPanel; // 구급차 이미지 있는 패널
-    [SerializeField] private GameObject bustedPanel; // 철창 이미지 있는 패널
-    [SerializeField] private Image fadePanel;        // 검은색 페이드 아웃용 이미지
+    [SerializeField] private GameObject wastedPanel; // Wasted 패널 (CanvasGroup 포함 필수)
+    [SerializeField] private GameObject bustedPanel; // Busted 패널 (CanvasGroup 포함 필수)
+    [SerializeField] private Image fadePanel;        // (이제 암전용으로는 사용하지 않음)
+
+    private bool isJailEndingActive = false;
 
     private void Start()
     {
-        // 시작할 땐 다 꺼두기
-        if (wastedPanel) wastedPanel.SetActive(false);
-        if (bustedPanel) bustedPanel.SetActive(false);
+        // 시작할 때 패널들을 끄고 투명도를 0으로 초기화
+        SetupInitialPanel(wastedPanel);
+        SetupInitialPanel(bustedPanel);
+
         if (fadePanel) fadePanel.gameObject.SetActive(false);
     }
 
-    // 부상 엔딩 (Wasted) 호출
+    private void SetupInitialPanel(GameObject panel)
+    {
+        if (panel != null)
+        {
+            panel.SetActive(false);
+            CanvasGroup cg = panel.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 0f;
+        }
+    }
+
     public void ShowWasted()
     {
-        StartCoroutine(ShowPanelRoutine(wastedPanel));
+        isJailEndingActive = false;
+        StartCoroutine(ShowPanelFadeInRoutine(wastedPanel));
     }
 
-    // 체포 엔딩 (Busted) 호출
     public void ShowBusted()
     {
-        StartCoroutine(ShowPanelRoutine(bustedPanel));
+        isJailEndingActive = true;
+        StartCoroutine(ShowPanelFadeInRoutine(bustedPanel));
     }
 
-    private IEnumerator ShowPanelRoutine(GameObject panelToShow)
+    private IEnumerator ShowPanelFadeInRoutine(GameObject panelToShow)
     {
-        // 1. 검은색 페이드 아웃 (1초 동안)
-        if (fadePanel != null)
+        if (panelToShow == null) yield break;
+
+        // 1. 패널 활성화 (아직 Alpha가 0이라 보이지 않음)
+        panelToShow.SetActive(true);
+        CanvasGroup cg = panelToShow.GetComponent<CanvasGroup>();
+
+        // 2. 패널 자체의 투명도를 0에서 1로 올림 (Fade-in)
+        if (cg != null)
         {
-            fadePanel.gameObject.SetActive(true);
             float t = 0f;
             while (t < 1f)
             {
-                t += Time.unscaledDeltaTime; // TimeScale이 0일 수도 있어서 unscaled 사용
-                fadePanel.color = new Color(0, 0, 0, t);
+                // 슬로우 모션 중일 수 있으므로 unscaledDeltaTime 사용
+                t += Time.unscaledDeltaTime;
+                cg.alpha = Mathf.Lerp(0f, 1f, t);
                 yield return null;
             }
+            cg.alpha = 1f;
         }
-
-        // 2. 패널 켜기
-        panelToShow.SetActive(true);
-        // ★ [요청하신 부분 수정] ★
-        // UI가 떴으니, 앞을 가리고 있는 검은 페이드 이미지를 투명하게(또는 끄기) 만듭니다.
-        if (fadePanel != null)
+        else
         {
-            // 방법 A: 투명하게 만들기 (부드럽게 하려면 또 반복문 쓰면 됨)
-            fadePanel.color = new Color(0, 0, 0, 0);
-
-            // 방법 B: 아예 꺼버리기 (이게 더 확실함)
-            fadePanel.gameObject.SetActive(false);
+            // CanvasGroup이 없으면 그냥 바로 보여줌
+            panelToShow.SetActive(true);
         }
-        // 3. 커서 보이기
+
+        // 3. 커서 설정
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
-        // 4. 시간 완전 정지 (필요하다면)
+        // 4. 시간 정지
         Time.timeScale = 0f;
     }
 
-    // 'Return to Hideout' 버튼에 연결할 함수
     public void OnClickReturnToHideout()
     {
-        Time.timeScale = 1f; // 시간 정상화 필수!
+        Time.timeScale = 1f;
 
-        // ★ 여기서 "실패했다"는 정보를 GameManager에 저장하고 넘어가야 
-        // 은신처에서 신문을 띄울 수 있음. (나중에 구현)
-        // GameManager.Instance.SetLastResult(false, "Wasted"); 
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ProcessMissionFail(isJailEndingActive);
+        }
 
-        SceneManager.LoadScene("Hideout"); // 씬 이름 확인 필요
+        int hideoutLevel = GameManager.Instance.data.currentHideoutLevel;
+        SceneManager.LoadScene($"Hideout_Lv{hideoutLevel}");
     }
 }

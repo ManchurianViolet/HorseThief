@@ -3,6 +3,8 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Splines;
 using Unity.Cinemachine;
 using System.Collections;
+using UnityEngine.Rendering; // 추가
+using Beautify.Universal;    // 추가
 
 public class HighwayFinishLine : MonoBehaviour
 {
@@ -11,6 +13,9 @@ public class HighwayFinishLine : MonoBehaviour
     [SerializeField] private HorseControl horseControl;
     [SerializeField] private GameObject truck;
     [SerializeField] private CinemachineCamera successCamera;
+
+    [Header("Visual Effects")]
+    [SerializeField] private Volume globalVolume;
 
     [Header("Spline Paths")]
     [SerializeField] private SplineContainer horseBoardingPath;
@@ -255,19 +260,47 @@ public class HighwayFinishLine : MonoBehaviour
 
     private IEnumerator TruckLeaveAloneRoutine()
     {
-        // 1. 조작 차단
-        // if (horseControl != null) horseControl.isControlEnabled = false;
+        // 1. 조작 차단 및 카메라 전환
+        if (horseControl != null) horseControl.isControlEnabled = false;
 
-        // 2. 카메라 전환 (트럭 비추기)
+        var brain = Camera.main.GetComponent<CinemachineBrain>();
+        brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.Cut, 0f);
+
         if (successCamera != null) successCamera.Priority = 200;
 
-        // 3. 문 닫기
+        // 2. 문 닫기 연출
         yield return StartCoroutine(CloseDoorsRoutine());
 
-        // 4. 트럭 출발 (말 없이 트럭만 이동)
-        yield return StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, truckEscapeSpeed));
+        // 3. 트럭 출발 시작 (MoveAlongSpline은 완료될 때까지 yield 하므로 StartCoroutine으로 병렬 실행)
+        Debug.Log("🚚 트럭이 떠납니다... 플레이어를 버려둔 채로.");
+        StartCoroutine(MoveAlongSpline(truck.transform, truckEscapePath, truckEscapeSpeed));
 
-        // 5. 트럭이 어느 정도 가면 (혹은 도착하면) UI 띄우기
-        FindObjectOfType<GameOverUI>().ShowBusted();
+        // 4. ★ [요청 사항] 출발 0.2초 대기
+        yield return new WaitForSeconds(0.2f);
+
+        // 5. ★ [세피아 효과 적용]
+        if (globalVolume != null && globalVolume.profile.TryGet(out Beautify.Universal.Beautify beautify))
+        {
+            beautify.active = true;
+            beautify.sepia.overrideState = true;
+            beautify.sepia.value = 1f;
+            Debug.Log("🎨 BUSTED: Sepia 적용");
+        }
+
+        // 6. ★ [슬로우 모션 적용]
+        Time.timeScale = 0.25f;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+        Debug.Log("🎬 BUSTED: 슬로우 모션 시작");
+
+        // 7. ★ [2초 감상 타임] 실시간 시간으로 대기
+        yield return new WaitForSecondsRealtime(2.0f);
+
+        // 8. UI 표시 (ShowBusted 호출)
+        var goUI = FindObjectOfType<GameOverUI>();
+        if (goUI != null)
+        {
+            goUI.ShowBusted();
+            Debug.Log("📺 BUSTED UI 표시");
+        }
     }
 }

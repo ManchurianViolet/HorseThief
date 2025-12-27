@@ -201,4 +201,28 @@ public class GameManager : MonoBehaviour
         // 저장된 은신처 레벨에 맞춰서 씬 이동
         SceneManager.LoadScene($"Hideout_Lv{data.currentHideoutLevel}");
     }
+    public void ProcessMissionFail(bool isJailEnding)
+    {
+        int fine = 0;
+
+        if (isJailEnding)
+        {
+            // 구치소 엔딩 벌금: (구치소 실패횟수 + 1) * 500
+            fine = (data.jailFailCount + 1) * 500;
+            data.jailFailCount++;
+            Debug.Log($"🚨 구치소행! 벌금 ${fine} 부과 (누적 {data.jailFailCount}회)");
+        }
+        else
+        {
+            // 병원 엔딩 벌금: (병원 실패횟수 + 1) * 500
+            fine = (data.hospitalFailCount + 1) * 500;
+            data.hospitalFailCount++;
+            Debug.Log($"🚑 병원행! 벌금 ${fine} 부과 (누적 {data.hospitalFailCount}회)");
+        }
+
+        // 돈 차감 및 저장
+        data.money -= fine;
+
+        SaveGameData();
+    }
 }

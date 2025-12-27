@@ -2,7 +2,8 @@
 public class PlayerData
 {
     public int money = 0;
-
+    public int hospitalFailCount = 0;
+    public int jailFailCount = 0;
     public int currentHideoutLevel = 1;
     public bool[] unlockedHideouts = new bool[3];
     public bool[] collectedArts = new bool[17];
@@ -25,6 +26,7 @@ public class PlayerData
         unlockedHideouts[0] = true;
         unlockedHideouts[1] = false;
         unlockedHideouts[2] = false;
+
 
         // ★ [수정됨] 여기를 꼭 0으로 바꿔야 합니다!
         powerLv = 0;
