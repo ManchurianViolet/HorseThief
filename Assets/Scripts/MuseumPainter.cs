@@ -233,7 +233,7 @@ public class MuseumPainter : MonoBehaviour
     private void UpdateAccuracyUI(float accuracy)
     {
         float truncated = Mathf.Floor(accuracy * 10f) / 10f;
-        if (accuracyText != null) accuracyText.text = $"Accuracy: {truncated}%";
+        if (accuracyText != null) accuracyText.text = $"{truncated}%";
         else Debug.Log($"점수 갱신됨: {truncated}% (UI 연결 안됨)");
     }
 
